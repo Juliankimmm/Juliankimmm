@@ -17,7 +17,7 @@ Brief description or purpose of the project.
 ## 💻 Skills
 
 - Programming Languages: Java, Python, Javascript, HTML, CSS, Google Apps, Microsoft Office Suite, ModelSim, MPLAB
-- Relevant Coursework: Programming in Java, Introduction to Data Structures, Discrete Mathematics, Logic Design and Computer Organization
+- Relevant Coursework: Programming in Java, Introduction to Data Structures, Discrete Mathematics, Computer Security, Logic Design and Computer Organization
 
 ## 🌱 Currently Learning
 
