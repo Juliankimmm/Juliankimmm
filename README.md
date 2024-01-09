@@ -1,6 +1,6 @@
 # Hi there, I'm Julian Kim! 👋
 
-I am a student-athlete at Case Western Reserve University, passionate about software engineering and creating solutions that make people's lives easier.
+I am a student-athlete at Case Western Reserve University, passionate about software engineering and creating solutions that make people's lives easier or just a little bit more enjoyable.
 
 ## 🚀 Projects
 
