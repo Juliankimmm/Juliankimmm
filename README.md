@@ -33,7 +33,7 @@ I am always eager to expand my knowledge. I am learning how to utilize APIs and 
 - Case Western Reserve University
   - Major: Computer Science, BS
   - Minor: Computer Engineering, Artificial Intelligence, Math 
-  - Expected Graduation; 2026
+  - Expected Graduation: 2026
 
 
 ## 🤝 Open to Collaborate
