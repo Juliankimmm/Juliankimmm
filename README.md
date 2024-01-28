@@ -10,10 +10,6 @@ Here are some of the projects I'm currently working on:
 
 The PDF Toolkit is a user-friendly web application born out of the specific needs of a law office. What began as a simple PDF merge tool has transformed into a versatile toolkit, offering features such as merging multiple PDFs, extracting specific pages, switching page positions, and moving pages within a document. With a drag-and-drop interface and straightforward buttons, this toolkit empowers users to effortlessly manage and manipulate PDFs, making it an invaluable asset for anyone dealing with document organization and customization. Dive into the world of seamless PDF handling with the PDF Toolkit! 📄✨
 
-### Project 2: [Project Name]
-
-Brief description or purpose of the project.
-
 ## 💻 Skills
 
 - Programming Languages: Java, Python, Javascript, HTML, CSS, Google Apps, Microsoft Office Suite, ModelSim, MPLAB
