@@ -13,7 +13,7 @@ The PDF Toolkit is a user-friendly web application born out of the specific need
 ## 💻 Skills
 
 - Programming Languages: Java, Python, Javascript, HTML, CSS, Google Apps, Microsoft Office Suite, ModelSim, MPLAB
-- Relevant Coursework: Programming in Java, Introduction to Data Structures, Discrete Mathematics, Computer Security, Logic Design and Computer Organization
+- Relevant Coursework: Programming in Java, Introduction to Data Structures, Discrete Mathematics, Mathematical Logic and Model Theory, Computer Security, Logic Design and Computer Organization, Intro to Operating Systems and Concurrent Programming, Algorithms, Computer Design - FPGAs, Introduction to Artificial Intelligence, Software Engineering
 
 ## 🌱 Currently Learning
 
@@ -28,7 +28,7 @@ I am always eager to expand my knowledge. I am learning how to utilize APIs and 
 
 - Case Western Reserve University
   - Major: Computer Science, BS
-  - Minor: Computer Engineering, Artificial Intelligence, Math 
+  - Minor: Computer Engineering, Artificial Intelligence, Math, Computer Gaming
   - Expected Graduation: 2026
 
 
