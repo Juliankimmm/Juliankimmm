@@ -14,7 +14,7 @@ A fully connected feedforward neural network designed to classify Iris species (
 
 Collegym is a web application designed to help users log their workouts, engage in group workouts with others, and share content related to fitness. Whether you're looking to track your progress, join group challenges, or post your gym experiences, Collegym provides a community-driven platform for fitness enthusiasts.
 
-# Features
+Features
 - Workout Log: Easily track your individual workouts and progress over time
 - Group Workouts: Join or create group workouts with friends and other users.
 - Content Sharing: Post and share workout routines, tips, and fitness-related content with the community.
