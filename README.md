@@ -6,10 +6,19 @@ I am a student-athlete at Case Western Reserve University, passionate about soft
 
 Here are some of the projects worth checking out:
 
-### Project 1: Neural Network-Based Iris Classification Model
+### Neural Network-Based Iris Classification Model
 
 A fully connected feedforward neural network designed to classify Iris species (Setosa, Versicolor, Virginica) based on their features. The model uses dimensionality reduction via PCA for visualization and features ReLU activations for non-linear learning. It is trained with categorical cross-entropy loss and Adam optimizer, achieving high accuracy on the Iris dataset.
 
+### Collegym
+
+Collegym is a web application designed to help users log their workouts, engage in group workouts with others, and share content related to fitness. Whether you're looking to track your progress, join group challenges, or post your gym experiences, Collegym provides a community-driven platform for fitness enthusiasts.
+
+## Features
+- Workout Log: Easily track your individual workouts and progress over time
+- Group Workouts: Join or create group workouts with friends and other users.
+- Content Sharing: Post and share workout routines, tips, and fitness-related content with the community.
+- User Profiles: Create personalized profiles to showcase your fitness journey and connect with others.
 
 ## 💻 Skills
 
