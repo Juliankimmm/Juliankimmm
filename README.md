@@ -41,8 +41,8 @@ I am always eager to expand my knowledge. I am currently doing more research on 
 
 - Case Western Reserve University
   - Major: Computer Science, BS
-  - Minor: Computer Engineering, Artificial Intelligence, Math, Computer Gaming
-  - Expected Graduation: 2026
+  - Minor: Computer Engineering, Artificial Intelligence, Math
+  - Expected Graduation: Fall 2025
 
 
 ## 🤝 Open to Collaborate
