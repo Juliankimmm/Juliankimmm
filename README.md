@@ -1,6 +1,6 @@
 # Hi, I'm Julian Kim
 
-**Computer Science @ Case Western Reserve University** · Machine Learning · Computer Vision · Full-Stack Development
+**Computer Science graduate, Case Western Reserve University** · Machine Learning · Computer Vision · Full-Stack Development
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/juliankimmm)
 [![Email](https://img.shields.io/badge/Email-D14836?style=flat-square&logo=gmail&logoColor=white)](mailto:jkswimtkd@gmail.com)
@@ -8,7 +8,7 @@
 
 ## About Me
 
-I'm pursuing a B.S. in Computer Science at Case Western Reserve University, with minors in Computer Engineering, Artificial Intelligence, and Mathematics, and I compete as a student-athlete. I like building things end to end: training the model, writing the API around it, and shipping the interface people actually use. Lately that has meant image moderation, voice agents, real-time computer vision, and quantitative trading strategies.
+I graduated from Case Western Reserve University with a B.S. in Computer Science and minors in Computer Engineering, Artificial Intelligence, and Mathematics, where I also competed as a student-athlete. I now work full time. I like building things end to end: training the model, writing the API around it, and shipping the interface people actually use. Lately that has meant image moderation, voice agents, real-time computer vision, and quantitative trading strategies.
 
 ## Featured Projects
 
