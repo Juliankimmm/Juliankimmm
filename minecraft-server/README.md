@@ -40,6 +40,16 @@ A Docker Compose setup for running a Minecraft **Java Edition** server on a home
 5. Click through and start the project. The first start takes a few minutes while the server downloads and generates the world. Watch progress in **Container → minecraft → Log**. It's ready when the log shows `Done (...)! For help, type "help"`.
 6. If the Synology firewall is on (**Control Panel → Security → Firewall**), allow TCP port `25565`, and also UDP `19132` if you turn on Bedrock crossplay.
 
+### Quickest: the setup script (UGREEN, Synology, or any NAS with SSH)
+
+SSH into the NAS as your normal user and run:
+
+```sh
+curl -fsSLO https://raw.githubusercontent.com/Juliankimmm/Juliankimmm/claude/laughing-noether-92a7w7/minecraft-server/setup.sh && bash setup.sh
+```
+
+The script puts everything in `/volume1/docker/minecraft` (pass a different folder as the first argument if needed). It asks for your Minecraft name, your friends' names and your timezone, fills in the rest of `.env` for you, starts the server and tells you when it's ready.
+
 ### Option B: Any NAS over SSH (Synology, QNAP, Unraid, OMV, plain Linux)
 
 ```sh
