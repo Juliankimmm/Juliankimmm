@@ -1,6 +1,6 @@
 # Hi, I'm Julian Kim
 
-**Computer Science graduate, Case Western Reserve University** · Machine Learning · Computer Vision · Full-Stack Development
+**Software Engineer at Dodo and attotempo** · Computer Science, Case Western Reserve University · Machine Learning · Full-Stack Development
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-0077B5?style=flat-square&logo=linkedin&logoColor=white)](https://linkedin.com/in/juliankimmm)
 [![Email](https://img.shields.io/badge/Email-D14836?style=flat-square&logo=gmail&logoColor=white)](mailto:jkswimtkd@gmail.com)
@@ -8,7 +8,7 @@
 
 ## About Me
 
-I graduated from Case Western Reserve University with a B.S. in Computer Science and minors in Computer Engineering, Artificial Intelligence, and Mathematics, where I also competed as a student-athlete. I now work full time. I like building things end to end: training the model, writing the API around it, and shipping the interface people actually use. Lately that has meant image moderation, voice agents, real-time computer vision, and quantitative trading strategies.
+I graduated from Case Western Reserve University with a B.S. in Computer Science and minors in Computer Engineering, Artificial Intelligence, and Mathematics, where I also competed as a student-athlete. I now work full time at Dodo and attotempo, where I write code, implement software, and plan workflows. I like building things end to end: training the model, writing the API around it, and shipping the interface people actually use. Lately that has meant image moderation, voice agents, real-time computer vision, and quantitative trading strategies.
 
 ## Featured Projects
 
@@ -25,6 +25,7 @@ I graduated from Case Western Reserve University with a B.S. in Computer Science
 
 ## Experience
 
+- **Dodo and attotempo** · Software Engineer · present: writing code, implementing software, and planning workflows for the company.
 - **SearchOwl** · Intern · 2024: built Python web scrapers that collected product data, including pricing, reviews, ingredients, and availability, from retail sites such as Sephora. ([code](https://github.com/Juliankimmm/SearchOwl-Projects))
 
 ## Tech Stack
