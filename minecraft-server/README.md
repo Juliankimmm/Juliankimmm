@@ -38,6 +38,18 @@ Open `docker-compose.yml` and change the three `CHANGE ME` items:
 
 ## 3. Start it on the NAS
 
+### UGREEN NASync (UGOS Pro)
+1. **App Center**: install **Docker** if you haven't already.
+2. **Files**: open the `docker` shared folder (the Docker app creates it) and make a folder inside it called `minecraft`.
+3. **Docker → Project → Create**.
+   - Project name: `minecraft`
+   - Storage path: the `docker/minecraft` folder you just made
+   - Compose config: paste in the edited `docker-compose.yml` (or upload it)
+4. Click **Deploy / Done**. The first start downloads everything and takes a few minutes.
+5. To watch progress: **Docker → Container → `mc` → Log**. It's ready when you see `Done (...)! For help, type "help"`.
+
+For the console commands in [section 6](#6-admin-commands), turn on SSH under **Control Panel → Terminal**, then connect with `ssh youradminuser@NAS-IP`. You may need `sudo` before `docker`.
+
 ### Synology (DSM 7.2+)
 1. **File Station**: create a folder, for example `docker/minecraft`.
 2. **Container Manager → Project → Create**.
@@ -60,12 +72,12 @@ If the NAS firewall is on, allow **TCP 25565** and **UDP 19132**.
 
 ## 4. Find the address to give everyone
 
-- **Same house / same Wi-Fi**: use the NAS's local IP, e.g. `192.168.1.50`. Synology shows it under *Control Panel → Network → Network Interface*.
+- **Same house / same Wi-Fi**: use the NAS's local IP, e.g. `192.168.1.50`. UGREEN shows it under *Control Panel → Network*, Synology under *Control Panel → Network → Network Interface*. Also set the NAS to a fixed IP (a "DHCP reservation" in your router) so the address doesn't change.
 - **Cousins at their own houses**: on your **router**, set up port forwarding to the NAS's local IP:
   - **TCP 25565** (Java)
   - **UDP 19132** (Bedrock)
 
-  Then give them your public IP (search "what is my ip"). Your public IP can change, so a free DDNS name is easier. Synology includes one under *Control Panel → External Access → DDNS*, e.g. `yourname.synology.me`.
+  Then give them your public IP (search "what is my ip"). Your public IP can change, so a free DDNS name is easier. UGREEN and Synology both offer DDNS in the NAS Control Panel; [DuckDNS](https://www.duckdns.org) also works.
 - **Port forwarding doesn't work?** Your internet provider may be using CGNAT, which blocks incoming connections. The workaround is [playit.gg](https://playit.gg): it's free and can tunnel both the Java (TCP) and Bedrock (UDP) ports.
 
 ## 5. Letting your cousins in
