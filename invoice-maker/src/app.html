@@ -1,0 +1,857 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Invoice Maker</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #fff; --ink: #1d2330; --muted: #667085; --line: #d8dce3;
+    --accent: #1f4e8c; --accent-ink: #fff; --danger: #b42318; --ok: #067647; --soft: #eef3fb;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header.top { background: var(--accent); color: var(--accent-ink); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  header.top h1 { margin: 0; font-size: 22px; }
+  header.top .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 120px; display: grid; gap: 18px; }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+  section.card > h2 { margin: 0 0 12px; font-size: 19px; display: flex; align-items: center; gap: 10px; }
+  .step { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; align-items: center; justify-content: center; font-size: 15px; flex: none; }
+  .hint { color: var(--muted); font-size: 14px; margin: -6px 0 12px; }
+  .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+  label.f { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); }
+  input, select, textarea { font: inherit; color: var(--ink); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; width: 100%; }
+  textarea { resize: vertical; min-height: 38px; }
+  input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 8px 14px; }
+  button:hover { background: var(--soft); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { filter: brightness(1.1); }
+  button.big { font-size: 18px; padding: 12px 22px; font-weight: 600; }
+  button.danger { color: var(--danger); }
+  button.icon { padding: 4px 9px; }
+  header.top button { background: rgba(255,255,255,.15); color: #fff; border-color: rgba(255,255,255,.35); }
+  header.top button:hover { background: rgba(255,255,255,.28); }
+  .two { display: grid; gap: 18px; grid-template-columns: minmax(280px, 380px) 1fr; }
+  .stack { display: grid; gap: 18px; }
+  .stack .menu { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+  .stack .menu-item { border-right: 1px solid var(--line); }
+  @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
+  .menu { border: 1px solid var(--line); border-radius: 8px; max-height: 480px; overflow: auto; }
+  .menu-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--line); }
+  .menu-item:last-child { border-bottom: 0; }
+  .menu-item input[type=checkbox] { width: 20px; height: 20px; flex: none; }
+  .menu-item label { flex: 1; cursor: pointer; }
+  .menu-item .qty { color: var(--muted); font-size: 13px; white-space: nowrap; }
+  .menu-item .tools { display: flex; gap: 4px; }
+  .menu-item .tools button { padding: 2px 7px; font-size: 13px; }
+  .row { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; margin-top: 10px; }
+  .row > * { flex: none; }
+  table.lines { width: 100%; border-collapse: collapse; }
+  table.lines th { text-align: left; font-size: 13px; color: var(--muted); font-weight: 600; padding: 6px 4px; border-bottom: 2px solid var(--line); }
+  table.lines td { padding: 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  table.lines td.num, table.lines th.num { text-align: right; }
+  table.lines input, table.lines textarea { padding: 6px 7px; }
+  table.lines .amt { padding-top: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  table.lines tfoot td { font-weight: 600; border-bottom: 0; padding-top: 10px; }
+  .empty { color: var(--muted); text-align: center; padding: 18px; font-style: italic; }
+  .totals { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; max-width: 420px; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .totals .due { font-weight: 700; font-size: 20px; border-top: 2px solid var(--ink); padding-top: 6px; }
+  .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 12px 16px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; box-shadow: 0 -4px 12px rgba(0,0,0,.06); z-index: 5; }
+  .bottom-bar .due-mini { align-self: center; font-weight: 600; margin-right: 8px; }
+  .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--ok); color: #fff; padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 20; }
+  .toast.show { opacity: 1; }
+  details.settings > summary { cursor: pointer; font-size: 19px; font-weight: 600; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 15px; }
+  .check input { width: 18px; height: 18px; }
+  dialog { border: 1px solid var(--line); border-radius: 10px; padding: 20px; width: min(520px, 92vw); }
+  dialog::backdrop { background: rgba(0,0,0,.35); }
+  .nc { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Invoice Maker</h1>
+  <div class="actions">
+    <button id="btnNew" title="Start a new invoice (keeps your menu and settings)">New invoice</button>
+    <button id="btnBackup" title="Save a backup file of your menu, clients and settings">Backup menu</button>
+    <button id="btnRestore" title="Load a backup file">Restore backup</button>
+    <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+  </div>
+</header>
+
+<main>
+  <!-- STEP 1: Client & invoice info -->
+  <section class="card">
+    <h2><span class="step">1</span> Client &amp; invoice info</h2>
+    <div class="grid">
+      <label class="f">Saved client
+        <select id="clientPick"><option value="">— pick a saved client or type below —</option></select>
+      </label>
+      <label class="f">Invoice submitted to
+        <input id="clientName" placeholder="e.g. Mr. Sung Man Kim">
+      </label>
+      <label class="f">Case / matter (line under client)
+        <input id="matter" placeholder="e.g. CAM L 001080-26 Gulf Coast Bank vs Sung M. Kim">
+      </label>
+      <label class="f">"In Reference To" title
+        <input id="reference" placeholder="e.g. Litigation">
+      </label>
+    </div>
+    <div class="grid" style="margin-top:12px">
+      <label class="f">Invoice #
+        <input id="invoiceNo" placeholder="optional">
+      </label>
+      <label class="f">Invoice date
+        <input id="invoiceDate" type="date">
+      </label>
+      <label class="f">Services from
+        <input id="fromDate" type="date">
+      </label>
+      <label class="f">Services through
+        <input id="toDate" type="date">
+      </label>
+    </div>
+    <div class="row">
+      <button id="btnSaveClient">★ Save this client for next time</button>
+      <button id="btnDeleteClient" class="danger">Remove saved client</button>
+      <button id="btnAutoDates" title="Set From/Through to the first and last dates of the entries below">Set dates from entries</button>
+    </div>
+  </section>
+
+  <!-- STEP 2: Services -->
+  <section class="card">
+    <h2><span class="step">2</span> Services (labor)</h2>
+    <p class="hint">Pick the date, check the work you did, then press <b>Add checked</b>. You can change any line afterwards.</p>
+    <div class="stack">
+      <div>
+        <label class="f" style="max-width:220px">Date of work <input id="svcDate" type="date"></label>
+        <div style="margin-top:10px" class="menu" id="svcMenu"></div>
+        <div class="row">
+          <button class="primary" id="btnAddSvc">Add checked ↓</button>
+          <button id="btnNewSvcItem">+ New menu item</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="lines" id="svcTable">
+          <thead><tr>
+            <th style="width:150px">Date</th><th style="width:70px">By</th><th>Service summary</th>
+            <th class="num" style="width:78px">Hours</th><th class="num" style="width:88px">Rate</th>
+            <th class="num" style="width:100px">Amount</th><th style="width:76px"></th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot><tr><td colspan="3">Subtotal</td><td class="num" id="svcHours"></td><td></td><td class="num" id="svcTotal"></td><td></td></tr></tfoot>
+        </table>
+        <div class="row"><button id="btnBlankSvc">+ Add blank line</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 3: Expenses -->
+  <section class="card">
+    <h2><span class="step">3</span> Expenses</h2>
+    <p class="hint">Same idea: check the expenses, then <b>Add checked</b>. Change the dollar amount on the line if it was different this time.</p>
+    <div class="stack">
+      <div>
+        <label class="f" style="max-width:220px">Date of expense <input id="expDate" type="date"></label>
+        <div style="margin-top:10px" class="menu" id="expMenu"></div>
+        <div class="row">
+          <button class="primary" id="btnAddExp">Add checked ↓</button>
+          <button id="btnNewExpItem">+ New menu item</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="lines" id="expTable">
+          <thead><tr>
+            <th style="width:140px">Date</th><th>Expense</th><th class="num" style="width:120px">Amount ($)</th><th style="width:76px"></th>
+          </tr></thead>
+          <tbody></tbody>
+          <tfoot><tr><td colspan="2">Expense total</td><td class="num" id="expTotal"></td><td></td></tr></tfoot>
+        </table>
+        <div class="row"><button id="btnBlankExp">+ Add blank line</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 4: Totals -->
+  <section class="card">
+    <h2><span class="step">4</span> Balance &amp; totals</h2>
+    <div class="two">
+      <div class="grid" style="grid-template-columns:1fr">
+        <label class="f">Previous balance ($) <input id="prevBalance" type="number" step="0.01" placeholder="0.00"></label>
+        <label class="f">Payment received – thank you ($) <input id="payment" type="number" step="0.01" placeholder="0.00"></label>
+        <label class="f">Voluntary reduction (hours) <input id="reductionHours" type="number" step="0.1" min="0" placeholder="0"></label>
+        <label class="f">Reduction rate ($/hr) <input id="reductionRate" type="number" step="0.01" placeholder="uses default rate"></label>
+        <label class="check"><input type="checkbox" id="showIncrement"> Include the "1/10 hour billing increment" note</label>
+      </div>
+      <div class="totals" id="totalsBox"></div>
+    </div>
+  </section>
+
+  <!-- Settings -->
+  <section class="card">
+    <details class="settings" id="settingsBox">
+      <summary>⚙ Letterhead &amp; settings (saved automatically)</summary>
+      <div class="grid" style="margin-top:14px">
+        <label class="f">Line 1 (small) <input data-firm="line1"></label>
+        <label class="f">Name (large, bold) <input data-firm="name"></label>
+        <label class="f">Line 3 (small) <input data-firm="line3"></label>
+        <label class="f">Address (one line per row) <textarea data-firm="address" rows="2"></textarea></label>
+        <label class="f">Phone <input data-firm="phone"></label>
+        <label class="f">Email <input data-firm="email"></label>
+        <label class="f">Default rate ($/hr) <input data-firm="rate" type="number" step="0.01"></label>
+        <label class="f">Default "By" initials <input data-firm="by"></label>
+        <label class="f">Terms (optional, e.g. Net 10) <input data-firm="terms"></label>
+        <label class="f">Note under heading <input data-firm="headNote"></label>
+      </div>
+      <div class="grid" style="margin-top:12px;grid-template-columns:1fr">
+        <label class="f">Payment line <input data-firm="payable"></label>
+        <label class="f">Billing increment note <textarea data-firm="incrementNote" rows="2"></textarea></label>
+        <label class="f">Voluntary reduction note — <i>{hours}</i> is replaced with the number of hours <textarea data-firm="reductionNote" rows="4"></textarea></label>
+      </div>
+      <div class="row"><button id="btnResetFirm" class="danger">Reset letterhead to original</button></div>
+    </details>
+  </section>
+</main>
+
+<div class="bottom-bar">
+  <span class="due-mini" id="dueMini"></span>
+  <button id="btnPreview" class="big">Preview</button>
+  <button id="btnPdf" class="primary big">⬇ Download PDF invoice</button>
+</div>
+
+<dialog id="itemDialog">
+  <form method="dialog" id="itemForm">
+    <h3 id="itemDialogTitle" style="margin-top:0">Menu item</h3>
+    <div class="grid" style="grid-template-columns:1fr">
+      <label class="f">Description <textarea id="itemText" rows="3" required></textarea></label>
+      <label class="f" id="itemQtyLabel">Usual hours <input id="itemQty" type="number" step="0.01" min="0"></label>
+    </div>
+    <div class="row" style="justify-content:flex-end">
+      <button value="cancel" formnovalidate>Cancel</button>
+      <button value="ok" class="primary">Save to menu</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<!--LIBS-->
+
+<script>
+(function () {
+  'use strict';
+  var STORE_KEY = 'invoiceMaker.v1';
+
+  var DEFAULT_FIRM = {
+    line1: 'Law Offices of',
+    name: 'Hyung Seok Kim',
+    line3: 'Limited Liability Company',
+    address: '460 Bergen Blvd Suite 230\nPalisades Park, NJ 07650',
+    phone: '(201) 585-0700',
+    email: 'James@hskimlaw.com',
+    rate: 500,
+    by: 'HSK',
+    terms: '',
+    headNote: 'TC* = telephone conversation',
+    payable: 'Please make a check payable to "Law Offices of Hyung Seok Kim, LLC"',
+    incrementNote: '*Billing Increment: Time has been voluntarily recorded in one-tenth (1/10) hour increments, a finer increment than the one-fourth (1/4) hour increment specified in the retainer agreement.',
+    reductionNote: '*Voluntary Reduction: {hours} hours\nThis reduction of billable hours and the voluntary billing increment are contingent upon payment in full within ten (10) days of the date of this invoice. If payment is not received within that period, both the voluntary reduction and the one-tenth (1/10) hour increment may be withdrawn at my discretion, and the invoice may be recalculated based on the billing increment agreed upon in the retainer agreement, with the full time recorded and without the {hours}-hour reduction.'
+  };
+
+  var DEFAULT_SERVICES = [
+    ['Meeting with Client', 1.0],
+    ['TC with Client', 0.3],
+    ['TC with Client and text messages', 0.5],
+    ['Text messages with Client', 0.1],
+    ['Emails with Client', 0.2],
+    ["TC with Court's clerk", 0.3],
+    ['Reviewed the docket report', 0.5],
+    ['Emailed opposing counsel', 0.2],
+    ['Prepared and efiled a letter', 0.4],
+    ['Reviewed opposition and researched cases', 1.0],
+    ['Prepared and efiled Reply brief', 3.0],
+    ['Prepared Certification of Client', 1.0],
+    ['Preparation of Oral Argument; Oral Argument', 1.0],
+    ['Travel Time', 1.0],
+    ['Printed FedEx label; drafted a letter to Chambers for courtesy copy; dropped off at FedEx', 0.5],
+    ['Overnighted courtesy copy with a cover letter', 0.5]
+  ];
+  var DEFAULT_EXPENSES = [
+    ['Motion fee', 50],
+    ['Answer filing fee', 175],
+    ['FedEx fee for courtesy copy', 15],
+    ['Public parking fee', 15]
+  ];
+
+  // ---------- helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function todayISO() {
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
+  function round2(n) { return Math.round(n * 100) / 100; }
+  function money(n) {
+    var neg = n < 0; n = Math.abs(round2(n));
+    var s = n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return (neg ? '-$' : '$') + s;
+  }
+  function plain2(n) { return round2(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
+  function fmtHours(n) { return (Math.round(n * 100) / 100).toFixed(n * 10 % 1 ? 2 : 1); }
+  function usDate(iso, long) {
+    if (!iso) return '';
+    var p = iso.split('-');
+    return p[1] + '/' + p[2] + '/' + (long ? p[0] : p[0].slice(2));
+  }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'text') e.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), attrs[k]);
+      else if (k in e && k !== 'list') e[k] = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) { if (c) e.appendChild(c); });
+    return e;
+  }
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 2200);
+  }
+
+  // ---------- state ----------
+  function freshInvoice() {
+    return {
+      clientName: '', matter: '', reference: '', invoiceNo: '',
+      invoiceDate: todayISO(), fromDate: '', toDate: '',
+      services: [], expenses: [],
+      prevBalance: '', payment: '', reductionHours: '', reductionRate: '',
+      showIncrement: true
+    };
+  }
+  function defaultState() {
+    return {
+      firm: Object.assign({}, DEFAULT_FIRM),
+      serviceMenu: DEFAULT_SERVICES.map(function (s) { return { id: uid(), text: s[0], qty: s[1] }; }),
+      expenseMenu: DEFAULT_EXPENSES.map(function (s) { return { id: uid(), text: s[0], qty: s[1] }; }),
+      clients: [],
+      invoice: freshInvoice()
+    };
+  }
+  var state;
+  function load() {
+    var raw = null;
+    try { raw = localStorage.getItem(STORE_KEY); } catch (e) {}
+    state = defaultState();
+    if (raw) {
+      try {
+        var saved = JSON.parse(raw);
+        state.firm = Object.assign({}, DEFAULT_FIRM, saved.firm || {});
+        if (Array.isArray(saved.serviceMenu)) state.serviceMenu = saved.serviceMenu;
+        if (Array.isArray(saved.expenseMenu)) state.expenseMenu = saved.expenseMenu;
+        if (Array.isArray(saved.clients)) state.clients = saved.clients;
+        if (saved.invoice) state.invoice = Object.assign(freshInvoice(), saved.invoice);
+      } catch (e) { console.warn('Could not read saved data', e); }
+    }
+  }
+  var storageWarned = false;
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
+    catch (e) {
+      if (!storageWarned) { storageWarned = true; alert('This browser is not letting the page save. Use "Backup menu" to keep a copy of your menu.'); }
+    }
+  }
+
+  // ---------- step 1: client ----------
+  var invFields = ['clientName', 'matter', 'reference', 'invoiceNo', 'invoiceDate', 'fromDate', 'toDate',
+                   'prevBalance', 'payment', 'reductionHours', 'reductionRate'];
+  function bindInvoiceFields() {
+    invFields.forEach(function (f) {
+      $(f).addEventListener('input', function () { state.invoice[f] = $(f).value; save(); renderTotals(); });
+    });
+    $('showIncrement').addEventListener('change', function () { state.invoice.showIncrement = $('showIncrement').checked; save(); });
+  }
+  function fillInvoiceFields() {
+    invFields.forEach(function (f) { $(f).value = state.invoice[f] || ''; });
+    $('showIncrement').checked = !!state.invoice.showIncrement;
+  }
+  function renderClients() {
+    var pick = $('clientPick');
+    pick.innerHTML = '';
+    pick.appendChild(el('option', { value: '', text: state.clients.length ? '— pick a saved client —' : '(no saved clients yet)' }));
+    state.clients.slice().sort(function (a, b) { return a.clientName.localeCompare(b.clientName); })
+      .forEach(function (c) {
+        pick.appendChild(el('option', { value: c.id, text: c.clientName + (c.matter ? ' — ' + c.matter : '') }));
+      });
+  }
+  $('clientPick').addEventListener('change', function () {
+    var c = state.clients.find(function (x) { return x.id === $('clientPick').value; });
+    if (!c) return;
+    ['clientName', 'matter', 'reference'].forEach(function (f) { state.invoice[f] = c[f] || ''; $(f).value = state.invoice[f]; });
+    save();
+  });
+  $('btnSaveClient').addEventListener('click', function () {
+    var inv = state.invoice;
+    if (!inv.clientName.trim()) { alert('Type the client name first.'); return; }
+    var existing = state.clients.find(function (c) { return c.clientName === inv.clientName && c.matter === inv.matter; });
+    if (existing) existing.reference = inv.reference;
+    else state.clients.push({ id: uid(), clientName: inv.clientName, matter: inv.matter, reference: inv.reference });
+    save(); renderClients(); toast('Client saved');
+  });
+  $('btnDeleteClient').addEventListener('click', function () {
+    var id = $('clientPick').value;
+    if (!id) { alert('Pick the saved client to remove from the list first.'); return; }
+    if (!confirm('Remove this client from the saved list?')) return;
+    state.clients = state.clients.filter(function (c) { return c.id !== id; });
+    save(); renderClients(); toast('Client removed');
+  });
+  $('btnAutoDates').addEventListener('click', function () {
+    var dates = state.invoice.services.concat(state.invoice.expenses).map(function (l) { return l.date; }).filter(Boolean).sort();
+    if (!dates.length) { alert('Add some entries with dates first.'); return; }
+    state.invoice.fromDate = dates[0]; state.invoice.toDate = dates[dates.length - 1];
+    $('fromDate').value = dates[0]; $('toDate').value = dates[dates.length - 1];
+    save();
+  });
+
+  // ---------- menus ----------
+  function renderMenu(kind) {
+    var list = kind === 'svc' ? state.serviceMenu : state.expenseMenu;
+    var box = $(kind + 'Menu');
+    box.innerHTML = '';
+    if (!list.length) { box.appendChild(el('div', { className: 'empty', text: 'Menu is empty — add an item.' })); return; }
+    list.forEach(function (item, i) {
+      var cbId = kind + '_cb_' + item.id;
+      box.appendChild(el('div', { className: 'menu-item' }, [
+        el('input', { type: 'checkbox', id: cbId, value: item.id }),
+        el('label', { htmlFor: cbId, text: item.text }),
+        el('span', { className: 'qty', text: kind === 'svc' ? fmtHours(num(item.qty)) + ' h' : money(num(item.qty)) }),
+        el('span', { className: 'tools' }, [
+          el('button', { title: 'Move up', text: '↑', onclick: function () { moveItem(list, i, -1, kind); } }),
+          el('button', { title: 'Edit', text: '✎', onclick: function () { editItem(kind, item); } }),
+          el('button', { title: 'Delete from menu', className: 'danger', text: '✕', onclick: function () {
+            if (confirm('Delete "' + item.text + '" from the menu?')) {
+              list.splice(list.indexOf(item), 1); save(); renderMenu(kind);
+            }
+          } })
+        ])
+      ]));
+    });
+  }
+  function moveItem(list, i, dir, kind) {
+    var j = i + dir; if (j < 0 || j >= list.length) return;
+    var t = list[i]; list[i] = list[j]; list[j] = t; save(); renderMenu(kind);
+  }
+  var dialogCtx = null;
+  function editItem(kind, item, presetText, presetQty) {
+    dialogCtx = { kind: kind, item: item };
+    $('itemDialogTitle').textContent = (item ? 'Edit ' : 'New ') + (kind === 'svc' ? 'service' : 'expense') + ' menu item';
+    $('itemQtyLabel').firstChild.textContent = kind === 'svc' ? 'Usual hours ' : 'Usual amount ($) ';
+    $('itemText').value = item ? item.text : (presetText || '');
+    $('itemQty').value = item ? item.qty : (presetQty !== undefined ? presetQty : '');
+    $('itemDialog').showModal();
+    $('itemText').focus();
+  }
+  $('itemDialog').addEventListener('close', function () {
+    if ($('itemDialog').returnValue !== 'ok' || !dialogCtx) return;
+    var text = $('itemText').value.trim(); if (!text) return;
+    var qty = num($('itemQty').value);
+    var list = dialogCtx.kind === 'svc' ? state.serviceMenu : state.expenseMenu;
+    if (dialogCtx.item) { dialogCtx.item.text = text; dialogCtx.item.qty = qty; }
+    else list.push({ id: uid(), text: text, qty: qty });
+    save(); renderMenu(dialogCtx.kind); toast('Menu saved');
+    dialogCtx = null;
+  });
+  $('btnNewSvcItem').addEventListener('click', function () { editItem('svc', null); });
+  $('btnNewExpItem').addEventListener('click', function () { editItem('exp', null); });
+
+  function addChecked(kind) {
+    var list = kind === 'svc' ? state.serviceMenu : state.expenseMenu;
+    var date = $(kind + 'Date').value;
+    var boxes = $(kind + 'Menu').querySelectorAll('input[type=checkbox]:checked');
+    if (!boxes.length) { alert('Check at least one item in the menu first.'); return; }
+    boxes.forEach(function (cb) {
+      var item = list.find(function (x) { return x.id === cb.value; });
+      if (!item) return;
+      if (kind === 'svc') state.invoice.services.push(newSvcLine(date, item.text, item.qty));
+      else state.invoice.expenses.push({ id: uid(), date: date, text: item.text, amount: item.qty });
+      cb.checked = false;
+    });
+    save(); renderLines(kind); renderTotals();
+    toast(boxes.length + ' line' + (boxes.length > 1 ? 's' : '') + ' added');
+  }
+  function newSvcLine(date, text, hours) {
+    return { id: uid(), date: date, by: state.firm.by, text: text, hours: hours, rate: state.firm.rate, nc: false };
+  }
+  $('btnAddSvc').addEventListener('click', function () { addChecked('svc'); });
+  $('btnAddExp').addEventListener('click', function () { addChecked('exp'); });
+  $('btnBlankSvc').addEventListener('click', function () {
+    state.invoice.services.push(newSvcLine($('svcDate').value, '', ''));
+    save(); renderLines('svc');
+    var rows = $('svcTable').tBodies[0].rows; rows[rows.length - 1].querySelector('textarea').focus();
+  });
+  $('btnBlankExp').addEventListener('click', function () {
+    state.invoice.expenses.push({ id: uid(), date: $('expDate').value, text: '', amount: '' });
+    save(); renderLines('exp');
+    var rows = $('expTable').tBodies[0].rows; rows[rows.length - 1].querySelector('textarea').focus();
+  });
+
+  // ---------- invoice lines ----------
+  function svcAmount(l) { return l.nc ? 0 : round2(num(l.hours) * num(l.rate)); }
+  function sortByDate(a, b) { return (a.date || '9999').localeCompare(b.date || '9999'); }
+  function autoGrow(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
+
+  function renderLines(kind) {
+    var lines = kind === 'svc' ? state.invoice.services : state.invoice.expenses;
+    var tbody = $(kind + 'Table').tBodies[0];
+    tbody.innerHTML = '';
+    if (!lines.length) {
+      tbody.appendChild(el('tr', {}, [el('td', { colSpan: 7, className: 'empty', text: 'No lines yet — check items on the left and press "Add checked".' })]));
+    }
+    lines.forEach(function (l) {
+      function inp(field, attrs) {
+        var a = Object.assign({ value: l[field] === undefined ? '' : l[field] }, attrs || {});
+        a.oninput = function (e) { l[field] = e.target.value; save(); refreshRow(); renderTotals(); if (e.target.tagName === 'TEXTAREA') autoGrow(e.target); };
+        return el(attrs && attrs.tag === 'textarea' ? 'textarea' : 'input', a);
+      }
+      var amtCell = el('td', { className: 'num amt' });
+      function refreshRow() {
+        amtCell.textContent = kind === 'svc' ? (l.nc ? 'NC  $0.00' : money(svcAmount(l))) : '';
+      }
+      var remove = el('button', { className: 'icon danger', title: 'Remove line', text: '✕', onclick: function () {
+        lines.splice(lines.indexOf(l), 1); save(); renderLines(kind); renderTotals();
+      } });
+      var star = el('button', { className: 'icon', title: 'Save this line to the menu for next time', text: '★', onclick: function () {
+        if (!l.text.trim()) { alert('Type a description first.'); return; }
+        editItem(kind, null, l.text, kind === 'svc' ? l.hours : l.amount);
+      } });
+      var desc = inp('text', { tag: 'textarea', rows: 1, placeholder: 'Description' });
+      var tr;
+      if (kind === 'svc') {
+        var ncBox = el('input', { type: 'checkbox', checked: !!l.nc, onchange: function (e) { l.nc = e.target.checked; save(); refreshRow(); renderTotals(); } });
+        tr = el('tr', {}, [
+          el('td', {}, [inp('date', { type: 'date' })]),
+          el('td', {}, [inp('by')]),
+          el('td', {}, [desc]),
+          el('td', {}, [inp('hours', { type: 'number', step: '0.1', min: '0', style: 'text-align:right' })]),
+          el('td', {}, [inp('rate', { type: 'number', step: '1', min: '0', style: 'text-align:right' }),
+                        el('label', { className: 'nc', title: 'No charge' }, [ncBox, document.createTextNode('no charge')])]),
+          amtCell,
+          el('td', { style: 'white-space:nowrap' }, [star, remove])
+        ]);
+      } else {
+        tr = el('tr', {}, [
+          el('td', {}, [inp('date', { type: 'date' })]),
+          el('td', {}, [desc]),
+          el('td', {}, [inp('amount', { type: 'number', step: '0.01', style: 'text-align:right' })]),
+          el('td', { style: 'white-space:nowrap' }, [star, remove])
+        ]);
+      }
+      refreshRow();
+      tbody.appendChild(tr);
+      requestAnimationFrame(function () { autoGrow(desc); });
+    });
+  }
+
+  // ---------- totals ----------
+  function calc() {
+    var inv = state.invoice;
+    var hours = 0, labor = 0, exp = 0;
+    inv.services.forEach(function (l) { hours += num(l.hours); labor += svcAmount(l); });
+    inv.expenses.forEach(function (l) { exp += num(l.amount); });
+    var redH = num(inv.reductionHours);
+    var redRate = inv.reductionRate !== '' ? num(inv.reductionRate) : num(state.firm.rate);
+    var reduction = round2(redH * redRate);
+    var total = round2(labor + exp);
+    var prev = num(inv.prevBalance), pay = Math.abs(num(inv.payment));
+    return {
+      hours: round2(hours), labor: round2(labor), expenses: round2(exp), total: total,
+      prev: prev, payment: pay, redH: redH, reduction: reduction,
+      due: round2(total + prev - pay - reduction)
+    };
+  }
+  function renderTotals() {
+    var c = calc(), box = $('totalsBox');
+    box.innerHTML = '';
+    function row(label, val, cls) {
+      box.appendChild(el('div', { className: cls || '', text: label }));
+      box.appendChild(el('div', { className: cls || '', text: val, style: 'text-align:right' }));
+    }
+    row('Total hours', fmtHours(c.hours));
+    row('Labor', money(c.labor));
+    row('Expenses', money(c.expenses));
+    row('Total invoice amount', money(c.total));
+    row('Previous balance', money(c.prev));
+    row('Payment – thank you', money(-c.payment));
+    if (c.redH) row('Voluntary reduction (' + fmtHours(c.redH) + ' h)', money(-c.reduction));
+    row('Balance (amount due)', money(c.due), 'due');
+    $('svcHours').textContent = fmtHours(c.hours);
+    $('svcTotal').textContent = money(c.labor);
+    $('expTotal').textContent = money(c.expenses);
+    $('dueMini').textContent = 'Amount due: ' + money(c.due);
+  }
+
+  // ---------- settings ----------
+  document.querySelectorAll('[data-firm]').forEach(function (inp) {
+    var k = inp.getAttribute('data-firm');
+    inp.addEventListener('input', function () {
+      state.firm[k] = inp.type === 'number' ? num(inp.value) : inp.value; save(); renderTotals();
+    });
+  });
+  function fillFirm() {
+    document.querySelectorAll('[data-firm]').forEach(function (inp) { inp.value = state.firm[inp.getAttribute('data-firm')]; });
+  }
+  $('btnResetFirm').addEventListener('click', function () {
+    if (!confirm('Reset the letterhead and notes to the original text?')) return;
+    state.firm = Object.assign({}, DEFAULT_FIRM); save(); fillFirm(); renderTotals();
+  });
+
+  // ---------- header buttons ----------
+  $('btnNew').addEventListener('click', function () {
+    if ((state.invoice.services.length || state.invoice.expenses.length) &&
+        !confirm('Start a new invoice? The current lines will be cleared. (Your menu, clients and settings stay.)')) return;
+    var lastNo = state.invoice.invoiceNo;
+    state.invoice = freshInvoice();
+    if (/^\d+$/.test(lastNo)) state.invoice.invoiceNo = String(parseInt(lastNo, 10) + 1);
+    save(); renderAll();
+    window.scrollTo(0, 0);
+  });
+  $('btnBackup').addEventListener('click', function () {
+    var data = { app: 'invoice-maker', version: 1, savedAt: new Date().toISOString(),
+      firm: state.firm, serviceMenu: state.serviceMenu, expenseMenu: state.expenseMenu, clients: state.clients };
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    downloadBlob(blob, 'InvoiceMaker_backup_' + todayISO() + '.json');
+  });
+  $('btnRestore').addEventListener('click', function () { $('restoreFile').click(); });
+  $('restoreFile').addEventListener('change', function () {
+    var f = $('restoreFile').files[0]; if (!f) return;
+    var r = new FileReader();
+    r.onload = function () {
+      try {
+        var d = JSON.parse(r.result);
+        if (d.app !== 'invoice-maker') throw new Error('not a backup');
+        if (!confirm('Replace your current menu, clients and settings with this backup?')) return;
+        state.firm = Object.assign({}, DEFAULT_FIRM, d.firm || {});
+        state.serviceMenu = d.serviceMenu || []; state.expenseMenu = d.expenseMenu || []; state.clients = d.clients || [];
+        save(); renderAll(); toast('Backup restored');
+      } catch (e) { alert('That file is not an Invoice Maker backup.'); }
+      $('restoreFile').value = '';
+    };
+    r.readAsText(f);
+  });
+
+  function downloadBlob(blob, name) {
+    var url = URL.createObjectURL(blob);
+    var a = el('a', { href: url, download: name });
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+
+  // ---------- PDF ----------
+  function buildPdf() {
+    var inv = state.invoice, firm = state.firm, c = calc();
+    var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' });
+    var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
+    var M = 54, FONT = 'times';
+    var y = 54;
+    function center(text, size, style) {
+      doc.setFont(FONT, style || 'normal'); doc.setFontSize(size);
+      doc.text(text, W / 2, y, { align: 'center' }); y += size + 3;
+    }
+
+    // letterhead
+    if (firm.line1) center(firm.line1, 11, 'normal');
+    if (firm.name) center(firm.name, 16, 'bold');
+    if (firm.line3) center(firm.line3, 11, 'normal');
+    String(firm.address || '').split('\n').filter(Boolean).forEach(function (a) { center(a.trim(), 10.5); });
+    var contact = [firm.phone, firm.email].filter(Boolean).join('   |   ');
+    if (contact) center(contact, 10.5);
+    y += 4;
+    doc.setLineWidth(0.8); doc.line(M, y, W - M, y);
+    y += 26;
+
+    // bill-to (left) & invoice box (right)
+    var topY = y;
+    doc.setFont(FONT, 'normal'); doc.setFontSize(10.5);
+    doc.text('Invoice submitted to:', M, y); y += 15;
+    doc.setFont(FONT, 'bold'); doc.setFontSize(12);
+    var leftW = 280;
+    doc.splitTextToSize(inv.clientName || '', leftW).forEach(function (t) { doc.text(t, M + 6, y); y += 14; });
+    doc.setFont(FONT, 'normal'); doc.setFontSize(10.5);
+    doc.splitTextToSize(inv.matter || '', leftW).forEach(function (t) { doc.text(t, M + 6, y); y += 13; });
+    var leftEnd = y;
+
+    var rx = W - M;
+    var ry = topY;
+    doc.setFont(FONT, 'bold'); doc.setFontSize(15);
+    doc.text('Invoice' + (inv.invoiceNo ? ' # ' + inv.invoiceNo : ''), rx, ry + 2, { align: 'right' });
+    ry += 12;
+    var boxRows = [['Invoice Date:', usDate(inv.invoiceDate, true)]];
+    if (firm.terms) boxRows.push(['Terms:', firm.terms]);
+    var through = inv.fromDate && inv.toDate ? usDate(inv.fromDate, true) + ' – ' + usDate(inv.toDate, true)
+                : usDate(inv.toDate || inv.fromDate, true);
+    if (through) boxRows.push([inv.fromDate && inv.toDate ? 'For Services:' : 'Services Through:', through]);
+    var bw = 200, bh = boxRows.length * 13 + 10, bx = rx - bw;
+    doc.setLineWidth(0.6); doc.rect(bx, ry, bw, bh);
+    doc.setFont(FONT, 'normal'); doc.setFontSize(10);
+    boxRows.forEach(function (r, i) {
+      var ly = ry + 15 + i * 13;
+      doc.text(r[0], bx + 92, ly, { align: 'right' });
+      doc.text(r[1], bx + 98, ly);
+    });
+    y = Math.max(leftEnd, ry + bh) + 16;
+
+    if (firm.headNote) { doc.setFont(FONT, 'italic'); doc.setFontSize(9.5); doc.text(firm.headNote, M, y); y += 10; }
+
+    var ref = (inv.reference || '').trim();
+    var head = [['Date', 'By', 'Service Summary', 'Hours', 'Rate', 'Amount']];
+    var body = [];
+    var services = inv.services.slice().sort(sortByDate);
+    var expenses = inv.expenses.slice().sort(sortByDate);
+    if (services.length) {
+      body.push([{ content: 'In Reference To:  ' + (ref ? ref + ' ' : '') + '(Labor)', colSpan: 6, styles: { fontStyle: 'bold', cellPadding: { top: 8, bottom: 4, left: 0, right: 2 } } }]);
+      services.forEach(function (l) {
+        body.push([usDate(l.date), l.by || '', l.text || '', l.hours === '' ? '' : fmtHours(num(l.hours)),
+                   plain2(num(l.rate)) + (l.nc ? ' NC' : ''), money(svcAmount(l))]);
+      });
+      body.push(subtotalRow('Labor subtotal', fmtHours(c.hours), money(c.labor)));
+    }
+    if (expenses.length) {
+      body.push([{ content: 'In Reference To:  ' + (ref ? ref + ' ' : '') + '(Expenses)', colSpan: 6, styles: { fontStyle: 'bold', cellPadding: { top: 12, bottom: 4, left: 0, right: 2 } } }]);
+      expenses.forEach(function (l) { body.push([usDate(l.date), '', l.text || '', '', '', money(num(l.amount))]); });
+      body.push(subtotalRow('Expense total', '', money(c.expenses)));
+    }
+    function subtotalRow(label, h, amt) {
+      var s = { fontStyle: 'bold', cellPadding: { top: 5, bottom: 4, left: 2, right: 2 } };
+      return [{ content: '', colSpan: 2, styles: s }, { content: label, styles: Object.assign({ halign: 'right' }, s) },
+              { content: h, styles: Object.assign({ halign: 'right' }, s) }, { content: '', styles: s },
+              { content: amt, styles: Object.assign({ halign: 'right' }, s) }];
+    }
+
+    doc.autoTable({
+      head: head, body: body, startY: y, theme: 'plain',
+      margin: { left: M, right: M, bottom: 54, top: 54 },
+      styles: { font: FONT, fontSize: 9.5, cellPadding: { top: 3, bottom: 3, left: 2, right: 2 }, valign: 'top', textColor: 20 },
+      headStyles: { fontStyle: 'bold', fontSize: 9.5 },
+      columnStyles: {
+        0: { cellWidth: 50 }, 1: { cellWidth: 34 }, 2: { cellWidth: 'auto' },
+        3: { cellWidth: 46, halign: 'right' }, 4: { cellWidth: 58, halign: 'right' }, 5: { cellWidth: 70, halign: 'right' }
+      },
+      didParseCell: function (d) {
+        if (d.section === 'head' && d.column.index >= 3) d.cell.styles.halign = 'right';
+      },
+      didDrawCell: function (d) {
+        if (d.section === 'head') {
+          doc.setLineWidth(0.8);
+          doc.line(d.cell.x, d.cell.y + d.cell.height, d.cell.x + d.cell.width, d.cell.y + d.cell.height);
+        }
+        var raw = d.row.raw;
+        if (d.section === 'body' && Array.isArray(raw) && raw.length === 5 && d.column.index === 5) {
+          doc.setLineWidth(0.5);
+          doc.line(d.cell.x + 10, d.cell.y + 1, d.cell.x + d.cell.width, d.cell.y + 1);
+        }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 14;
+
+    // totals
+    var tRows = [
+      ['Total Hours:', fmtHours(c.hours)],
+      ['Total Labor:', money(c.labor)],
+      ['Total Expenses:', money(c.expenses)],
+      ['Total Invoice Amount:', money(c.total)],
+      ['Previous Balance:', money(c.prev)],
+      ['Payment - thank you:', money(-c.payment)]
+    ];
+    if (c.redH) tRows.push(['*Voluntary Reduction (' + fmtHours(c.redH) + ' hrs):', money(-c.reduction)]);
+    tRows.push(['Balance (Amount Due):', money(c.due)]);
+    var last = tRows.length - 1;
+    if (y + tRows.length * 16 + 20 > H - 54) { doc.addPage(); y = 54; }
+    doc.autoTable({
+      body: tRows, startY: y, theme: 'plain', tableWidth: 260,
+      margin: { left: W - M - 260, right: M, bottom: 54, top: 54 },
+      rowPageBreak: 'avoid',
+      styles: { font: FONT, fontSize: 10.5, cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }, textColor: 20 },
+      columnStyles: { 0: { halign: 'right', cellWidth: 170 }, 1: { halign: 'right', cellWidth: 90 } },
+      didParseCell: function (d) {
+        if (d.row.index === last) { d.cell.styles.fontStyle = 'bold'; d.cell.styles.fontSize = 11.5; d.cell.styles.cellPadding = { top: 6, bottom: 2, left: 2, right: 2 }; }
+      },
+      didDrawCell: function (d) {
+        if (d.row.index === last && d.column.index === 1) {
+          doc.setLineWidth(0.8); doc.line(d.cell.x, d.cell.y + 2, d.cell.x + d.cell.width, d.cell.y + 2);
+        }
+      }
+    });
+    y = doc.lastAutoTable.finalY + 22;
+
+    // notes
+    var notes = [];
+    if (firm.payable) notes.push({ text: firm.payable, style: 'bold', size: 10.5 });
+    if (inv.showIncrement && firm.incrementNote) notes.push({ text: firm.incrementNote, style: 'normal', size: 9 });
+    if (c.redH && firm.reductionNote) notes.push({ text: firm.reductionNote.split('{hours}').join(fmtHours(c.redH)), style: 'normal', size: 9 });
+    notes.forEach(function (n) {
+      doc.setFont(FONT, n.style); doc.setFontSize(n.size);
+      String(n.text).split('\n').forEach(function (para) {
+        doc.splitTextToSize(para, W - 2 * M).forEach(function (line) {
+          if (y > H - 60) { doc.addPage(); y = 54; }
+          doc.text(line, M, y); y += n.size + 2.5;
+        });
+      });
+      y += 6;
+    });
+
+    // page numbers
+    var pages = doc.internal.getNumberOfPages();
+    for (var p = 1; p <= pages; p++) {
+      doc.setPage(p);
+      doc.setFont(FONT, 'normal'); doc.setFontSize(9);
+      doc.text('Page: ' + p + ' of ' + pages, W - M, H - 30, { align: 'right' });
+      if (p > 1) doc.text((inv.clientName || '') + (inv.invoiceNo ? '  —  Invoice # ' + inv.invoiceNo : ''), M, H - 30);
+    }
+    return doc;
+  }
+  function fileName() {
+    var d = (state.invoice.invoiceDate || todayISO()).replace(/-/g, '');
+    var who = (state.invoice.clientName || 'Client').replace(/^(mr|mrs|ms|dr)\.?\s+/i, '')
+      .replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    return 'Invoice_' + d + '_' + (who || 'Client') + '.pdf';
+  }
+  function ready() {
+    if (!window.jspdf || !window.jspdf.jsPDF) { alert('The PDF maker failed to load. Try re-opening this file.'); return false; }
+    if (!state.invoice.clientName.trim()) {
+      if (!confirm('There is no client name. Make the invoice anyway?')) { $('clientName').focus(); return false; }
+    }
+    if (!state.invoice.services.length && !state.invoice.expenses.length) { alert('Add at least one service or expense first.'); return false; }
+    return true;
+  }
+  $('btnPdf').addEventListener('click', function () {
+    if (!ready()) return;
+    try { buildPdf().save(fileName()); toast('Saved ' + fileName()); }
+    catch (e) { console.error(e); alert('Something went wrong making the PDF: ' + e.message); }
+  });
+  $('btnPreview').addEventListener('click', function () {
+    if (!ready()) return;
+    var w = window.open('', '_blank');
+    var url = buildPdf().output('bloburl');
+    if (w) w.location.href = url; else window.location.href = url;
+  });
+
+  // ---------- init ----------
+  function renderAll() {
+    fillInvoiceFields(); fillFirm(); renderClients();
+    renderMenu('svc'); renderMenu('exp');
+    renderLines('svc'); renderLines('exp'); renderTotals();
+  }
+  load();
+  $('svcDate').value = todayISO();
+  $('expDate').value = todayISO();
+  bindInvoiceFields();
+  renderAll();
+  window.__invoiceMaker = { state: function () { return state; }, buildPdf: buildPdf, calc: calc };
+})();
+</script>
+</body>
+</html>
