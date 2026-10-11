@@ -1,5 +1,6 @@
 # Java-only survival server (everyone on a computer with Java Edition).
-# Players connect on port 25565. Change the three "CHANGE ME" items before starting.
+# Home players connect to the NAS IP; remote players connect over Tailscale (see bottom).
+# Change the three "CHANGE ME" items before starting.
 
 services:
   mc:
@@ -60,3 +61,22 @@ services:
     volumes:
       - ./data:/data:ro
       - ./backups:/backups
+
+  # Private link for players outside the house (no router port forwarding needed).
+  # First start: open the "tailscale" container log and click the login link it prints.
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    restart: unless-stopped
+    network_mode: host
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      TS_HOSTNAME: "minecraft-nas"
+      TS_STATE_DIR: "/var/lib/tailscale"
+      TS_USERSPACE: "false"
+    volumes:
+      - ./tailscale:/var/lib/tailscale
