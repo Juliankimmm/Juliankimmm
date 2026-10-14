@@ -11,36 +11,36 @@
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
-  header.top { background: var(--accent); color: var(--accent-ink); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  header.top { background: var(--accent); color: var(--accent-ink); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 6; }
   header.top h1 { margin: 0; font-size: 22px; }
+  header.top .saved { font-size: 13px; opacity: .9; margin-left: 12px; font-weight: 400; }
   header.top .actions { display: flex; gap: 8px; flex-wrap: wrap; }
   main { max-width: 1200px; margin: 0 auto; padding: 20px 16px 120px; display: grid; gap: 18px; }
-  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; }
+  section.card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 18px 20px; scroll-margin-top: 80px; }
   section.card > h2 { margin: 0 0 12px; font-size: 19px; display: flex; align-items: center; gap: 10px; }
   .step { display: inline-flex; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; align-items: center; justify-content: center; font-size: 15px; flex: none; }
   .hint { color: var(--muted); font-size: 14px; margin: -6px 0 12px; }
   .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
   label.f { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); }
   input, select, textarea { font: inherit; color: var(--ink); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; width: 100%; }
+  input[type=range] { padding: 0; }
   textarea { resize: vertical; min-height: 38px; }
   input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
   button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 8px 14px; }
   button:hover { background: var(--soft); }
   button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
   button.primary:hover { filter: brightness(1.1); }
-  button.big { font-size: 18px; padding: 12px 22px; font-weight: 600; }
+  button.big { font-size: 17px; padding: 11px 20px; font-weight: 600; }
   button.danger { color: var(--danger); }
   button.icon { padding: 4px 9px; }
+  button.small { padding: 4px 10px; font-size: 14px; }
   header.top button { background: rgba(255,255,255,.15); color: #fff; border-color: rgba(255,255,255,.35); }
   header.top button:hover { background: rgba(255,255,255,.28); }
-  .two { display: grid; gap: 18px; grid-template-columns: minmax(280px, 380px) 1fr; }
-  .stack { display: grid; gap: 18px; }
-  .stack .menu { display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
-  .stack .menu-item { border-right: 1px solid var(--line); }
+  .two { display: grid; gap: 18px; grid-template-columns: minmax(280px, 420px) 1fr; }
   @media (max-width: 860px) { .two { grid-template-columns: 1fr; } }
-  .menu { border: 1px solid var(--line); border-radius: 8px; max-height: 480px; overflow: auto; }
-  .menu-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--line); }
-  .menu-item:last-child { border-bottom: 0; }
+  .stack { display: grid; gap: 18px; }
+  .menu { border: 1px solid var(--line); border-radius: 8px; max-height: 480px; overflow: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
+  .menu-item { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--line); border-right: 1px solid var(--line); }
   .menu-item input[type=checkbox] { width: 20px; height: 20px; flex: none; }
   .menu-item label { flex: 1; cursor: pointer; }
   .menu-item .qty { color: var(--muted); font-size: 13px; white-space: nowrap; }
@@ -55,42 +55,62 @@
   table.lines input, table.lines textarea { padding: 6px 7px; }
   table.lines .amt { padding-top: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
   table.lines tfoot td { font-weight: 600; border-bottom: 0; padding-top: 10px; }
+  table.list td { padding: 8px 6px; vertical-align: middle; }
+  table.list tr:hover td { background: var(--soft); }
+  table.list tr.current td { background: #fff8e1; }
   .empty { color: var(--muted); text-align: center; padding: 18px; font-style: italic; }
-  .totals { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; max-width: 420px; margin-left: auto; font-variant-numeric: tabular-nums; }
+  .totals { display: grid; grid-template-columns: 1fr auto; gap: 6px 24px; max-width: 440px; margin-left: auto; font-variant-numeric: tabular-nums; align-content: start; }
   .totals .due { font-weight: 700; font-size: 20px; border-top: 2px solid var(--ink); padding-top: 6px; }
-  .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 12px 16px; display: flex; justify-content: center; gap: 12px; flex-wrap: wrap; box-shadow: 0 -4px 12px rgba(0,0,0,.06); z-index: 5; }
-  .bottom-bar .due-mini { align-self: center; font-weight: 600; margin-right: 8px; }
-  .toast { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); background: var(--ok); color: #fff; padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 20; }
+  .totals .red { color: var(--danger); }
+  .bottom-bar { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--line); padding: 10px 16px; display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; box-shadow: 0 -4px 12px rgba(0,0,0,.06); z-index: 5; }
+  .bottom-bar .due-mini { font-weight: 600; margin-right: 8px; }
+  .toast { position: fixed; top: 70px; left: 50%; transform: translateX(-50%); background: var(--ok); color: #fff; padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 20; }
   .toast.show { opacity: 1; }
   details.settings > summary { cursor: pointer; font-size: 19px; font-weight: 600; }
+  details.settings h3 { margin: 22px 0 8px; font-size: 16px; border-top: 1px solid var(--line); padding-top: 16px; }
   .check { display: flex; align-items: center; gap: 8px; font-size: 15px; }
-  .check input { width: 18px; height: 18px; }
-  dialog { border: 1px solid var(--line); border-radius: 10px; padding: 20px; width: min(520px, 92vw); }
+  .check input { width: 18px; height: 18px; flex: none; }
+  dialog { border: 1px solid var(--line); border-radius: 10px; padding: 20px; width: min(560px, 92vw); }
   dialog::backdrop { background: rgba(0,0,0,.35); }
   .nc { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 3px; white-space: nowrap; }
+  .info { background: var(--soft); border: 1px solid #c9d8f0; border-radius: 8px; padding: 12px 14px; font-size: 14px; }
+  .info p { margin: 0 0 6px; } .info p:last-child { margin: 0; }
+  .lh-preview { border: 1px dashed var(--line); border-radius: 6px; padding: 8px; background: #fff; text-align: center; min-height: 60px; }
+  .lh-preview img { max-width: 100%; max-height: 220px; display: block; margin: 0 auto; }
+  .badge { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 10px; background: var(--soft); color: var(--accent); font-weight: 600; }
+  .editing { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  .hidden { display: none !important; }
 </style>
 </head>
 <body>
 <header class="top">
-  <h1>Invoice Maker</h1>
+  <h1>Invoice Maker <span class="saved" id="savedIndicator" title="Everything you type is saved automatically in this browser on this computer.">✓ Saved automatically</span></h1>
   <div class="actions">
-    <button id="btnNew" title="Start a new invoice (keeps your menu and settings)">New invoice</button>
-    <button id="btnBackup" title="Save a backup file of your menu, clients and settings">Backup menu</button>
-    <button id="btnRestore" title="Load a backup file">Restore backup</button>
+    <button id="btnNew" title="Start a new invoice (your menu, customers and saved invoices stay)">+ New invoice</button>
+    <button id="btnGoList" title="See invoices you saved before">Saved invoices</button>
+    <button id="btnBackup" title="Save a backup file of EVERYTHING (to move to another computer or keep a safety copy)">Backup</button>
+    <button id="btnRestore" title="Load a backup file">Restore</button>
     <input type="file" id="restoreFile" accept=".json,application/json" hidden>
   </div>
 </header>
 
 <main>
-  <!-- STEP 1: Client & invoice info -->
-  <section class="card">
-    <h2><span class="step">1</span> Client &amp; invoice info</h2>
+  <!-- STEP 1: Customer & invoice info -->
+  <section class="card" id="stepCustomer">
+    <h2><span class="step">1</span> Customer &amp; invoice info</h2>
+    <div class="editing" id="editingNote"></div>
     <div class="grid">
-      <label class="f">Saved client
-        <select id="clientPick"><option value="">— pick a saved client or type below —</option></select>
+      <label class="f">Saved customer
+        <select id="customerPick"></select>
       </label>
-      <label class="f">Invoice submitted to
+      <label class="f">Invoice submitted to (name)
         <input id="clientName" placeholder="e.g. Mr. Sung Man Kim">
+      </label>
+      <label class="f">Address (printed under the name)
+        <textarea id="address" rows="2" placeholder="Street&#10;City, State ZIP"></textarea>
+      </label>
+      <label class="f">Contact (phone / email — not printed)
+        <input id="contact" placeholder="e.g. (201) 555-1234">
       </label>
       <label class="f">Case / matter (line under client)
         <input id="matter" placeholder="e.g. CAM L 001080-26 Gulf Coast Bank vs Sung M. Kim">
@@ -99,9 +119,14 @@
         <input id="reference" placeholder="e.g. Litigation">
       </label>
     </div>
-    <div class="grid" style="margin-top:12px">
-      <label class="f">Invoice #
-        <input id="invoiceNo" placeholder="optional">
+    <div class="row">
+      <button id="btnSaveCustomer">★ Save as new customer</button>
+      <button id="btnUpdateCustomer">Update saved customer</button>
+      <button id="btnDeleteCustomer" class="danger">Delete saved customer</button>
+    </div>
+    <div class="grid" style="margin-top:16px">
+      <label class="f">Invoice # (filled in automatically — you can change it)
+        <input id="invoiceNo">
       </label>
       <label class="f">Invoice date
         <input id="invoiceDate" type="date">
@@ -114,16 +139,15 @@
       </label>
     </div>
     <div class="row">
-      <button id="btnSaveClient">★ Save this client for next time</button>
-      <button id="btnDeleteClient" class="danger">Remove saved client</button>
       <button id="btnAutoDates" title="Set From/Through to the first and last dates of the entries below">Set dates from entries</button>
+      <button id="btnNextNo" title="Put the next invoice number in the box">Use next invoice #</button>
     </div>
   </section>
 
   <!-- STEP 2: Services -->
   <section class="card">
     <h2><span class="step">2</span> Services (labor)</h2>
-    <p class="hint">Pick the date, check the work you did, then press <b>Add checked</b>. You can change any line afterwards.</p>
+    <p class="hint">Pick the date, check the work you did, then press <b>Add checked</b>. To rename a menu item, click its <b>✎</b> — the new name is saved for next time.</p>
     <div class="stack">
       <div>
         <label class="f" style="max-width:220px">Date of work <input id="svcDate" type="date"></label>
@@ -131,6 +155,7 @@
         <div class="row">
           <button class="primary" id="btnAddSvc">Add checked ↓</button>
           <button id="btnNewSvcItem">+ New menu item</button>
+          <button id="btnDefaultsSvc" title="Puts back any of the original menu items you deleted. Your renamed items stay.">Add back original items</button>
         </div>
       </div>
       <div style="overflow-x:auto">
@@ -159,12 +184,13 @@
         <div class="row">
           <button class="primary" id="btnAddExp">Add checked ↓</button>
           <button id="btnNewExpItem">+ New menu item</button>
+          <button id="btnDefaultsExp" title="Puts back any of the original menu items you deleted. Your renamed items stay.">Add back original items</button>
         </div>
       </div>
       <div style="overflow-x:auto">
         <table class="lines" id="expTable">
           <thead><tr>
-            <th style="width:140px">Date</th><th>Expense</th><th class="num" style="width:120px">Amount ($)</th><th style="width:76px"></th>
+            <th style="width:150px">Date</th><th>Expense</th><th class="num" style="width:120px">Amount ($)</th><th style="width:76px"></th>
           </tr></thead>
           <tbody></tbody>
           <tfoot><tr><td colspan="2">Expense total</td><td class="num" id="expTotal"></td><td></td></tr></tfoot>
@@ -176,30 +202,111 @@
 
   <!-- STEP 4: Totals -->
   <section class="card">
-    <h2><span class="step">4</span> Balance &amp; totals</h2>
+    <h2><span class="step">4</span> Balance, reduction &amp; totals</h2>
     <div class="two">
       <div class="grid" style="grid-template-columns:1fr">
         <label class="f">Previous balance ($) <input id="prevBalance" type="number" step="0.01" placeholder="0.00"></label>
         <label class="f">Payment received – thank you ($) <input id="payment" type="number" step="0.01" placeholder="0.00"></label>
-        <label class="f">Voluntary reduction (hours) <input id="reductionHours" type="number" step="0.1" min="0" placeholder="0"></label>
-        <label class="f">Reduction rate ($/hr) <input id="reductionRate" type="number" step="0.01" placeholder="uses default rate"></label>
+        <fieldset style="border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:grid;gap:10px">
+          <legend style="font-weight:600;padding:0 6px">Reduction (optional)</legend>
+          <label class="f">Reduction name (printed on the invoice)
+            <input id="redLabel" placeholder="Voluntary Reduction">
+          </label>
+          <div class="grid" style="grid-template-columns:1fr 1fr">
+            <label class="f">Reduce by
+              <select id="redType">
+                <option value="hours">Hours</option>
+                <option value="amount">Dollar amount ($)</option>
+                <option value="percent">Percent of labor (%)</option>
+              </select>
+            </label>
+            <label class="f"><span id="redValueLabel">Hours</span>
+              <input id="redValue" type="number" step="0.1" min="0" placeholder="0">
+            </label>
+          </div>
+          <label class="f" id="redRateWrap">Rate for reduced hours ($/hr)
+            <input id="redRate" type="number" step="0.01" placeholder="uses default rate">
+          </label>
+          <label class="check" id="redNoteWrap"><input type="checkbox" id="redNote"> Print the reduction note at the bottom (explains the hours reduction)</label>
+        </fieldset>
         <label class="check"><input type="checkbox" id="showIncrement"> Include the "1/10 hour billing increment" note</label>
       </div>
       <div class="totals" id="totalsBox"></div>
     </div>
   </section>
 
+  <!-- Saved invoices -->
+  <section class="card" id="savedSection">
+    <h2>📁 Saved invoices <span class="badge" id="savedCount"></span></h2>
+    <p class="hint">Every invoice is saved here when you download its PDF (or press <b>Save invoice</b>). <b>Open</b> to change it, <b>Copy</b> to start a new invoice from it.</p>
+    <div class="row" style="margin-top:0;margin-bottom:10px">
+      <input id="listSearch" placeholder="Search by name, invoice # or matter…" style="max-width:360px">
+    </div>
+    <div style="overflow-x:auto">
+      <table class="lines list" id="listTable">
+        <thead><tr><th>Invoice #</th><th>Date</th><th>Customer</th><th>Matter</th><th class="num">Amount due</th><th></th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
   <!-- Settings -->
   <section class="card">
     <details class="settings" id="settingsBox">
-      <summary>⚙ Letterhead &amp; settings (saved automatically)</summary>
-      <div class="grid" style="margin-top:14px">
+      <summary>⚙ Letterhead, numbering &amp; settings</summary>
+
+      <h3>Saving &amp; backups</h3>
+      <div class="info">
+        <p><b>You do not need to back up every time.</b> Everything — your menu, customers, saved invoices, letterhead and the invoice you are working on — saves automatically, in this browser, on this computer.</p>
+        <p><b>Backup</b> makes one file containing everything. Use it to move to another computer or browser, or every few weeks as a safety copy. <b>Restore</b> loads that file back. A restore replaces what is here now.</p>
+        <p>Keep opening this file in the <b>same browser</b> (e.g. always Chrome). A different browser will not see your saved data.</p>
+      </div>
+
+      <h3>Letterhead</h3>
+      <div class="two">
+        <div class="grid" style="grid-template-columns:1fr">
+          <label class="f">Upload letterhead (PNG or JPG works best; a PDF also works — its first page is used)
+            <input type="file" id="lhFile" accept="image/png,image/jpeg,application/pdf">
+          </label>
+          <div id="lhControls" class="grid hidden" style="grid-template-columns:1fr">
+            <div id="lhPageControls" class="grid" style="grid-template-columns:1fr">
+              <label class="f">Top edge of letterhead: <span id="lhTopVal"></span><input type="range" id="lhTop" min="0" max="60" step="0.5"></label>
+              <label class="f">Bottom edge of letterhead: <span id="lhBottomVal"></span><input type="range" id="lhBottom" min="2" max="80" step="0.5"></label>
+              <div class="hint" style="margin:0">Move the sliders so the preview shows just the letterhead. It prints at the same place and size as on your paper.</div>
+            </div>
+            <label class="f" id="lhSizeWrap">Size on the invoice: <span id="lhSizeVal"></span><input type="range" id="lhSize" min="30" max="100" step="1"></label>
+            <div class="row" style="margin-top:0">
+              <button id="lhRemove" class="danger">Remove letterhead (use typed text instead)</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="f" style="font-size:14px;color:var(--muted);margin-bottom:4px">Preview</div>
+          <div class="lh-preview" id="lhPreview"></div>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:12px">If there is no uploaded letterhead, this typed letterhead is used:</p>
+      <div class="grid">
         <label class="f">Line 1 (small) <input data-firm="line1"></label>
         <label class="f">Name (large, bold) <input data-firm="name"></label>
         <label class="f">Line 3 (small) <input data-firm="line3"></label>
         <label class="f">Address (one line per row) <textarea data-firm="address" rows="2"></textarea></label>
         <label class="f">Phone <input data-firm="phone"></label>
         <label class="f">Email <input data-firm="email"></label>
+      </div>
+
+      <h3>Invoice numbers</h3>
+      <div class="grid">
+        <label class="f">Prefix — <i>{YEAR}</i> becomes the current year <input id="numPrefix" placeholder="{YEAR}"></label>
+        <label class="f">Number of digits after the prefix
+          <select id="numDigits"><option>0</option><option>2</option><option>3</option><option>4</option><option>5</option></select>
+        </label>
+        <label class="f">Last invoice number used <input id="numLast" placeholder="none yet"></label>
+        <div class="f">Next invoice number will be <b id="numNext" style="font-size:18px;color:var(--ink)"></b></div>
+      </div>
+
+      <h3>Billing defaults &amp; notes</h3>
+      <div class="grid">
         <label class="f">Default rate ($/hr) <input data-firm="rate" type="number" step="0.01"></label>
         <label class="f">Default "By" initials <input data-firm="by"></label>
         <label class="f">Terms (optional, e.g. Net 10) <input data-firm="terms"></label>
@@ -208,17 +315,18 @@
       <div class="grid" style="margin-top:12px;grid-template-columns:1fr">
         <label class="f">Payment line <input data-firm="payable"></label>
         <label class="f">Billing increment note <textarea data-firm="incrementNote" rows="2"></textarea></label>
-        <label class="f">Voluntary reduction note — <i>{hours}</i> is replaced with the number of hours <textarea data-firm="reductionNote" rows="4"></textarea></label>
+        <label class="f">Reduction note — <i>{hours}</i>, <i>{amount}</i> and <i>{name}</i> are filled in for you <textarea data-firm="reductionNote" rows="4"></textarea></label>
       </div>
-      <div class="row"><button id="btnResetFirm" class="danger">Reset letterhead to original</button></div>
+      <div class="row"><button id="btnResetFirm" class="danger">Reset typed letterhead &amp; notes to original</button></div>
     </details>
   </section>
 </main>
 
 <div class="bottom-bar">
   <span class="due-mini" id="dueMini"></span>
+  <button id="btnSaveInvoice" class="big" title="Save this invoice to the Saved invoices list">💾 Save invoice</button>
   <button id="btnPreview" class="big">Preview</button>
-  <button id="btnPdf" class="primary big">⬇ Download PDF invoice</button>
+  <button id="btnPdf" class="primary big">⬇ Download PDF</button>
 </div>
 
 <dialog id="itemDialog">
@@ -242,7 +350,9 @@
 <script>
 (function () {
   'use strict';
-  var STORE_KEY = 'invoiceMaker.v1';
+  var STORE_KEY = 'invoiceMaker.v2';
+  var OLD_STORE_KEY = 'invoiceMaker.v1';
+  var DATA_VERSION = 2;
 
   var DEFAULT_FIRM = {
     line1: 'Law Offices of',
@@ -257,7 +367,7 @@
     headNote: 'TC* = telephone conversation',
     payable: 'Please make a check payable to "Law Offices of Hyung Seok Kim, LLC"',
     incrementNote: '*Billing Increment: Time has been voluntarily recorded in one-tenth (1/10) hour increments, a finer increment than the one-fourth (1/4) hour increment specified in the retainer agreement.',
-    reductionNote: '*Voluntary Reduction: {hours} hours\nThis reduction of billable hours and the voluntary billing increment are contingent upon payment in full within ten (10) days of the date of this invoice. If payment is not received within that period, both the voluntary reduction and the one-tenth (1/10) hour increment may be withdrawn at my discretion, and the invoice may be recalculated based on the billing increment agreed upon in the retainer agreement, with the full time recorded and without the {hours}-hour reduction.'
+    reductionNote: '*{name}: {hours} hours\nThis reduction of billable hours and the voluntary billing increment are contingent upon payment in full within ten (10) days of the date of this invoice. If payment is not received within that period, both the voluntary reduction and the one-tenth (1/10) hour increment may be withdrawn at my discretion, and the invoice may be recalculated based on the billing increment agreed upon in the retainer agreement, with the full time recorded and without the {hours}-hour reduction.'
   };
 
   var DEFAULT_SERVICES = [
@@ -288,25 +398,27 @@
   // ---------- helpers ----------
   function $(id) { return document.getElementById(id); }
   function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
   function todayISO() {
     var d = new Date();
     return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
   }
-  function pad(n) { return (n < 10 ? '0' : '') + n; }
   function num(v) { var n = parseFloat(v); return isFinite(n) ? n : 0; }
   function round2(n) { return Math.round(n * 100) / 100; }
+  function commas(s) { return s.replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
   function money(n) {
     var neg = n < 0; n = Math.abs(round2(n));
-    var s = n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return (neg ? '-$' : '$') + s;
+    return (neg ? '-$' : '$') + commas(n.toFixed(2));
   }
-  function plain2(n) { return round2(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ','); }
-  function fmtHours(n) { return (Math.round(n * 100) / 100).toFixed(n * 10 % 1 ? 2 : 1); }
+  function plain2(n) { return commas(round2(n).toFixed(2)); }
+  function fmtHours(n) { return (Math.round(n * 100) / 100).toFixed(Math.round(n * 100) % 10 ? 2 : 1); }
+  function fmtNum(n) { return String(Math.round(n * 100) / 100); }
   function usDate(iso, long) {
     if (!iso) return '';
     var p = iso.split('-');
     return p[1] + '/' + p[2] + '/' + (long ? p[0] : p[0].slice(2));
   }
+  function clone(o) { return JSON.parse(JSON.stringify(o)); }
   function el(tag, attrs, kids) {
     var e = document.createElement(tag);
     if (attrs) for (var k in attrs) {
@@ -320,106 +432,220 @@
   }
   function toast(msg) {
     var t = $('toast'); t.textContent = msg; t.classList.add('show');
-    clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 2200);
+    clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 2600);
   }
+  function menuFrom(list) { return list.map(function (s) { return { id: uid(), text: s[0], qty: s[1] }; }); }
 
   // ---------- state ----------
+  // Everything lives in ONE object. It is what gets saved to the browser and what Backup/Restore use.
   function freshInvoice() {
     return {
-      clientName: '', matter: '', reference: '', invoiceNo: '',
-      invoiceDate: todayISO(), fromDate: '', toDate: '',
+      id: uid(), customerId: '',
+      clientName: '', address: '', contact: '', matter: '', reference: '',
+      invoiceNo: '', invoiceDate: todayISO(), fromDate: '', toDate: '',
       services: [], expenses: [],
-      prevBalance: '', payment: '', reductionHours: '', reductionRate: '',
-      showIncrement: true
+      prevBalance: '', payment: '',
+      reduction: { label: 'Voluntary Reduction', type: 'hours', value: '', rate: '', note: true },
+      showIncrement: true,
+      dirty: false
     };
   }
   function defaultState() {
     return {
-      firm: Object.assign({}, DEFAULT_FIRM),
-      serviceMenu: DEFAULT_SERVICES.map(function (s) { return { id: uid(), text: s[0], qty: s[1] }; }),
-      expenseMenu: DEFAULT_EXPENSES.map(function (s) { return { id: uid(), text: s[0], qty: s[1] }; }),
-      clients: [],
-      invoice: freshInvoice()
+      version: DATA_VERSION,
+      settings: {
+        firm: Object.assign({}, DEFAULT_FIRM),
+        letterhead: null,
+        serviceMenu: menuFrom(DEFAULT_SERVICES),
+        expenseMenu: menuFrom(DEFAULT_EXPENSES),
+        numbering: { prefix: '{YEAR}', digits: 4 }
+      },
+      customers: [],
+      invoices: [],
+      counters: { lastInvoiceNumber: '' },
+      draft: freshInvoice()
     };
   }
-  var state;
-  function load() {
-    var raw = null;
-    try { raw = localStorage.getItem(STORE_KEY); } catch (e) {}
-    state = defaultState();
-    if (raw) {
-      try {
-        var saved = JSON.parse(raw);
-        state.firm = Object.assign({}, DEFAULT_FIRM, saved.firm || {});
-        if (Array.isArray(saved.serviceMenu)) state.serviceMenu = saved.serviceMenu;
-        if (Array.isArray(saved.expenseMenu)) state.expenseMenu = saved.expenseMenu;
-        if (Array.isArray(saved.clients)) state.clients = saved.clients;
-        if (saved.invoice) state.invoice = Object.assign(freshInvoice(), saved.invoice);
-      } catch (e) { console.warn('Could not read saved data', e); }
+
+  function normalizeInvoice(inv) {
+    var out = Object.assign(freshInvoice(), inv || {});
+    out.reduction = Object.assign(freshInvoice().reduction, (inv && inv.reduction) || {});
+    if (!Array.isArray(out.services)) out.services = [];
+    if (!Array.isArray(out.expenses)) out.expenses = [];
+    return out;
+  }
+  // Turn anything we've ever saved (v1 local data, v1 backup, v2) into the current shape.
+  function migrate(data) {
+    var s = defaultState();
+    if (!data || typeof data !== 'object') return s;
+    if (data.version >= 2 && data.settings) {
+      var st = data.settings;
+      s.settings.firm = Object.assign({}, DEFAULT_FIRM, st.firm || {});
+      s.settings.letterhead = st.letterhead || null;
+      if (Array.isArray(st.serviceMenu)) s.settings.serviceMenu = st.serviceMenu;
+      if (Array.isArray(st.expenseMenu)) s.settings.expenseMenu = st.expenseMenu;
+      s.settings.numbering = Object.assign(s.settings.numbering, st.numbering || {});
+      if (Array.isArray(data.customers)) s.customers = data.customers;
+      if (Array.isArray(data.invoices)) s.invoices = data.invoices.map(normalizeInvoice);
+      s.counters = Object.assign(s.counters, data.counters || {});
+      if (data.draft) s.draft = normalizeInvoice(data.draft);
+      return s;
     }
+    // version 1 (first release)
+    s.settings.firm = Object.assign({}, DEFAULT_FIRM, data.firm || {});
+    if (data.firm && data.firm.reductionNote) s.settings.firm.reductionNote = data.firm.reductionNote.replace(/^\*Voluntary Reduction:/, '*{name}:');
+    if (Array.isArray(data.serviceMenu)) s.settings.serviceMenu = data.serviceMenu;
+    if (Array.isArray(data.expenseMenu)) s.settings.expenseMenu = data.expenseMenu;
+    if (Array.isArray(data.clients)) s.customers = data.clients.map(function (c) {
+      return { id: c.id || uid(), clientName: c.clientName || '', address: '', contact: '', matter: c.matter || '', reference: c.reference || '' };
+    });
+    if (data.invoice) {
+      var old = data.invoice;
+      s.draft = normalizeInvoice(old);
+      s.draft.reduction.value = old.reductionHours || '';
+      s.draft.reduction.rate = old.reductionRate || '';
+      delete s.draft.reductionHours; delete s.draft.reductionRate;
+    }
+    return s;
+  }
+
+  var state;
+  function readStore(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function load() {
+    var raw = readStore(STORE_KEY) || readStore(OLD_STORE_KEY);
+    var data = null;
+    if (raw) { try { data = JSON.parse(raw); } catch (e) { console.warn('Could not read saved data', e); } }
+    state = migrate(data);
   }
   var storageWarned = false;
   function save() {
-    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); }
-    catch (e) {
-      if (!storageWarned) { storageWarned = true; alert('This browser is not letting the page save. Use "Backup menu" to keep a copy of your menu.'); }
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify(state));
+      var d = new Date();
+      $('savedIndicator').textContent = '✓ Saved automatically ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      return true;
+    } catch (e) {
+      $('savedIndicator').textContent = '⚠ Not saved';
+      if (!storageWarned) {
+        storageWarned = true;
+        alert('This browser could not save your changes' + (e && e.name === 'QuotaExceededError' ? ' because its storage is full (a very large letterhead image can cause this).' : '.') + '\n\nPress "Backup" now to keep a copy.');
+      }
+      return false;
     }
   }
+  function touch() { state.draft.dirty = true; save(); }
 
-  // ---------- step 1: client ----------
-  var invFields = ['clientName', 'matter', 'reference', 'invoiceNo', 'invoiceDate', 'fromDate', 'toDate',
-                   'prevBalance', 'payment', 'reductionHours', 'reductionRate'];
-  function bindInvoiceFields() {
-    invFields.forEach(function (f) {
-      $(f).addEventListener('input', function () { state.invoice[f] = $(f).value; save(); renderTotals(); });
-    });
-    $('showIncrement').addEventListener('change', function () { state.invoice.showIncrement = $('showIncrement').checked; save(); });
+  // ---------- invoice numbers ----------
+  function numPrefix() { return String(state.settings.numbering.prefix || '').replace(/\{YEAR\}/gi, String(new Date().getFullYear())); }
+  function seqOf(no, prefix) {
+    no = String(no || '').trim();
+    if (!no || no.slice(0, prefix.length) !== prefix) return null;
+    var rest = no.slice(prefix.length);
+    return /^\d+$/.test(rest) ? parseInt(rest, 10) : null;
   }
+  function nextInvoiceNumber() {
+    var prefix = numPrefix(), digits = parseInt(state.settings.numbering.digits, 10) || 0;
+    var max = seqOf(state.counters.lastInvoiceNumber, prefix) || 0;
+    state.invoices.forEach(function (i) { var s = seqOf(i.invoiceNo, prefix); if (s !== null && s > max) max = s; });
+    var seq = String(max + 1);
+    while (seq.length < digits) seq = '0' + seq;
+    return prefix + seq;
+  }
+  function recordInvoiceNumber(no) {
+    var prefix = numPrefix();
+    var s = seqOf(no, prefix);
+    if (s === null) return;
+    var cur = seqOf(state.counters.lastInvoiceNumber, prefix);
+    if (cur === null || s > cur) state.counters.lastInvoiceNumber = String(no).trim();
+  }
+
+  // ---------- step 1: customer & invoice fields ----------
+  var invFields = ['clientName', 'address', 'contact', 'matter', 'reference', 'invoiceNo', 'invoiceDate', 'fromDate', 'toDate', 'prevBalance', 'payment'];
+  var custFields = ['clientName', 'address', 'contact', 'matter', 'reference'];
+  invFields.forEach(function (f) {
+    $(f).addEventListener('input', function () { state.draft[f] = $(f).value; touch(); renderTotals(); });
+  });
+  $('showIncrement').addEventListener('change', function () { state.draft.showIncrement = $('showIncrement').checked; touch(); });
+
   function fillInvoiceFields() {
-    invFields.forEach(function (f) { $(f).value = state.invoice[f] || ''; });
-    $('showIncrement').checked = !!state.invoice.showIncrement;
+    var d = state.draft;
+    invFields.forEach(function (f) { $(f).value = d[f] || ''; });
+    $('showIncrement').checked = !!d.showIncrement;
+    $('redLabel').value = d.reduction.label || '';
+    $('redType').value = d.reduction.type || 'hours';
+    $('redValue').value = d.reduction.value;
+    $('redRate').value = d.reduction.rate;
+    $('redNote').checked = !!d.reduction.note;
+    syncReductionUI();
+    renderEditingNote();
   }
-  function renderClients() {
-    var pick = $('clientPick');
+  function renderEditingNote() {
+    var d = state.draft;
+    var saved = state.invoices.some(function (i) { return i.id === d.id; });
+    $('editingNote').textContent = saved
+      ? 'Editing saved invoice #' + (d.invoiceNo || '?') + (d.dirty ? ' — has changes not saved yet' : '')
+      : 'New invoice (not saved yet)';
+  }
+
+  function renderCustomers() {
+    var pick = $('customerPick');
     pick.innerHTML = '';
-    pick.appendChild(el('option', { value: '', text: state.clients.length ? '— pick a saved client —' : '(no saved clients yet)' }));
-    state.clients.slice().sort(function (a, b) { return a.clientName.localeCompare(b.clientName); })
+    pick.appendChild(el('option', { value: '', text: state.customers.length ? '— pick a saved customer —' : '(no saved customers yet)' }));
+    state.customers.slice().sort(function (a, b) { return a.clientName.localeCompare(b.clientName); })
       .forEach(function (c) {
         pick.appendChild(el('option', { value: c.id, text: c.clientName + (c.matter ? ' — ' + c.matter : '') }));
       });
+    pick.value = state.draft.customerId && state.customers.some(function (c) { return c.id === state.draft.customerId; }) ? state.draft.customerId : '';
   }
-  $('clientPick').addEventListener('change', function () {
-    var c = state.clients.find(function (x) { return x.id === $('clientPick').value; });
-    if (!c) return;
-    ['clientName', 'matter', 'reference'].forEach(function (f) { state.invoice[f] = c[f] || ''; $(f).value = state.invoice[f]; });
-    save();
+  $('customerPick').addEventListener('change', function () {
+    var c = state.customers.find(function (x) { return x.id === $('customerPick').value; });
+    if (!c) { state.draft.customerId = ''; touch(); return; }
+    state.draft.customerId = c.id;
+    custFields.forEach(function (f) { state.draft[f] = c[f] || ''; $(f).value = state.draft[f]; });
+    touch();
   });
-  $('btnSaveClient').addEventListener('click', function () {
-    var inv = state.invoice;
-    if (!inv.clientName.trim()) { alert('Type the client name first.'); return; }
-    var existing = state.clients.find(function (c) { return c.clientName === inv.clientName && c.matter === inv.matter; });
-    if (existing) existing.reference = inv.reference;
-    else state.clients.push({ id: uid(), clientName: inv.clientName, matter: inv.matter, reference: inv.reference });
-    save(); renderClients(); toast('Client saved');
+  function customerFromDraft(id) {
+    var c = { id: id };
+    custFields.forEach(function (f) { c[f] = state.draft[f] || ''; });
+    return c;
+  }
+  $('btnSaveCustomer').addEventListener('click', function () {
+    if (!state.draft.clientName.trim()) { alert('Type the customer name first.'); return; }
+    var c = customerFromDraft(uid());
+    state.customers.push(c);
+    state.draft.customerId = c.id;
+    save(); renderCustomers(); toast('Customer saved');
   });
-  $('btnDeleteClient').addEventListener('click', function () {
-    var id = $('clientPick').value;
-    if (!id) { alert('Pick the saved client to remove from the list first.'); return; }
-    if (!confirm('Remove this client from the saved list?')) return;
-    state.clients = state.clients.filter(function (c) { return c.id !== id; });
-    save(); renderClients(); toast('Client removed');
+  $('btnUpdateCustomer').addEventListener('click', function () {
+    var id = $('customerPick').value;
+    var i = state.customers.findIndex(function (c) { return c.id === id; });
+    if (i < 0) { alert('Pick the saved customer you want to update in the "Saved customer" list first.\n(To add a new one, use "Save as new customer".)'); return; }
+    state.customers[i] = customerFromDraft(id);
+    save(); renderCustomers(); toast('Customer updated');
+  });
+  $('btnDeleteCustomer').addEventListener('click', function () {
+    var id = $('customerPick').value;
+    if (!id) { alert('Pick the saved customer to delete first.'); return; }
+    if (!confirm('Delete this customer from the saved list? (Saved invoices are not affected.)')) return;
+    state.customers = state.customers.filter(function (c) { return c.id !== id; });
+    state.draft.customerId = '';
+    save(); renderCustomers(); toast('Customer deleted');
   });
   $('btnAutoDates').addEventListener('click', function () {
-    var dates = state.invoice.services.concat(state.invoice.expenses).map(function (l) { return l.date; }).filter(Boolean).sort();
+    var dates = state.draft.services.concat(state.draft.expenses).map(function (l) { return l.date; }).filter(Boolean).sort();
     if (!dates.length) { alert('Add some entries with dates first.'); return; }
-    state.invoice.fromDate = dates[0]; state.invoice.toDate = dates[dates.length - 1];
+    state.draft.fromDate = dates[0]; state.draft.toDate = dates[dates.length - 1];
     $('fromDate').value = dates[0]; $('toDate').value = dates[dates.length - 1];
-    save();
+    touch();
+  });
+  $('btnNextNo').addEventListener('click', function () {
+    state.draft.invoiceNo = nextInvoiceNumber(); $('invoiceNo').value = state.draft.invoiceNo; touch();
   });
 
   // ---------- menus ----------
+  function menuList(kind) { return kind === 'svc' ? state.settings.serviceMenu : state.settings.expenseMenu; }
   function renderMenu(kind) {
-    var list = kind === 'svc' ? state.serviceMenu : state.expenseMenu;
+    var list = menuList(kind);
     var box = $(kind + 'Menu');
     box.innerHTML = '';
     if (!list.length) { box.appendChild(el('div', { className: 'empty', text: 'Menu is empty — add an item.' })); return; }
@@ -431,7 +657,7 @@
         el('span', { className: 'qty', text: kind === 'svc' ? fmtHours(num(item.qty)) + ' h' : money(num(item.qty)) }),
         el('span', { className: 'tools' }, [
           el('button', { title: 'Move up', text: '↑', onclick: function () { moveItem(list, i, -1, kind); } }),
-          el('button', { title: 'Edit', text: '✎', onclick: function () { editItem(kind, item); } }),
+          el('button', { title: 'Rename / change', text: '✎', onclick: function () { editItem(kind, item); } }),
           el('button', { title: 'Delete from menu', className: 'danger', text: '✕', onclick: function () {
             if (confirm('Delete "' + item.text + '" from the menu?')) {
               list.splice(list.indexOf(item), 1); save(); renderMenu(kind);
@@ -448,7 +674,7 @@
   var dialogCtx = null;
   function editItem(kind, item, presetText, presetQty) {
     dialogCtx = { kind: kind, item: item };
-    $('itemDialogTitle').textContent = (item ? 'Edit ' : 'New ') + (kind === 'svc' ? 'service' : 'expense') + ' menu item';
+    $('itemDialogTitle').textContent = (item ? 'Change ' : 'New ') + (kind === 'svc' ? 'service' : 'expense') + ' menu item';
     $('itemQtyLabel').firstChild.textContent = kind === 'svc' ? 'Usual hours ' : 'Usual amount ($) ';
     $('itemText').value = item ? item.text : (presetText || '');
     $('itemQty').value = item ? item.qty : (presetQty !== undefined ? presetQty : '');
@@ -459,43 +685,53 @@
     if ($('itemDialog').returnValue !== 'ok' || !dialogCtx) return;
     var text = $('itemText').value.trim(); if (!text) return;
     var qty = num($('itemQty').value);
-    var list = dialogCtx.kind === 'svc' ? state.serviceMenu : state.expenseMenu;
+    var list = menuList(dialogCtx.kind);
     if (dialogCtx.item) { dialogCtx.item.text = text; dialogCtx.item.qty = qty; }
     else list.push({ id: uid(), text: text, qty: qty });
-    save(); renderMenu(dialogCtx.kind); toast('Menu saved');
+    save(); renderMenu(dialogCtx.kind); toast('Menu saved — it will be there next time');
     dialogCtx = null;
   });
   $('btnNewSvcItem').addEventListener('click', function () { editItem('svc', null); });
   $('btnNewExpItem').addEventListener('click', function () { editItem('exp', null); });
+  function addBackDefaults(kind) {
+    var list = menuList(kind), defaults = kind === 'svc' ? DEFAULT_SERVICES : DEFAULT_EXPENSES;
+    var have = {}; list.forEach(function (i) { have[i.text.toLowerCase()] = 1; });
+    var added = 0;
+    defaults.forEach(function (d) { if (!have[d[0].toLowerCase()]) { list.push({ id: uid(), text: d[0], qty: d[1] }); added++; } });
+    save(); renderMenu(kind);
+    toast(added ? added + ' original item' + (added > 1 ? 's' : '') + ' added back' : 'All original items are already in the menu');
+  }
+  $('btnDefaultsSvc').addEventListener('click', function () { addBackDefaults('svc'); });
+  $('btnDefaultsExp').addEventListener('click', function () { addBackDefaults('exp'); });
 
   function addChecked(kind) {
-    var list = kind === 'svc' ? state.serviceMenu : state.expenseMenu;
+    var list = menuList(kind);
     var date = $(kind + 'Date').value;
     var boxes = $(kind + 'Menu').querySelectorAll('input[type=checkbox]:checked');
     if (!boxes.length) { alert('Check at least one item in the menu first.'); return; }
     boxes.forEach(function (cb) {
       var item = list.find(function (x) { return x.id === cb.value; });
       if (!item) return;
-      if (kind === 'svc') state.invoice.services.push(newSvcLine(date, item.text, item.qty));
-      else state.invoice.expenses.push({ id: uid(), date: date, text: item.text, amount: item.qty });
+      if (kind === 'svc') state.draft.services.push(newSvcLine(date, item.text, item.qty));
+      else state.draft.expenses.push({ id: uid(), date: date, text: item.text, amount: item.qty });
       cb.checked = false;
     });
-    save(); renderLines(kind); renderTotals();
+    touch(); renderLines(kind); renderTotals();
     toast(boxes.length + ' line' + (boxes.length > 1 ? 's' : '') + ' added');
   }
   function newSvcLine(date, text, hours) {
-    return { id: uid(), date: date, by: state.firm.by, text: text, hours: hours, rate: state.firm.rate, nc: false };
+    return { id: uid(), date: date, by: state.settings.firm.by, text: text, hours: hours, rate: state.settings.firm.rate, nc: false };
   }
   $('btnAddSvc').addEventListener('click', function () { addChecked('svc'); });
   $('btnAddExp').addEventListener('click', function () { addChecked('exp'); });
   $('btnBlankSvc').addEventListener('click', function () {
-    state.invoice.services.push(newSvcLine($('svcDate').value, '', ''));
-    save(); renderLines('svc');
+    state.draft.services.push(newSvcLine($('svcDate').value, '', ''));
+    touch(); renderLines('svc');
     var rows = $('svcTable').tBodies[0].rows; rows[rows.length - 1].querySelector('textarea').focus();
   });
   $('btnBlankExp').addEventListener('click', function () {
-    state.invoice.expenses.push({ id: uid(), date: $('expDate').value, text: '', amount: '' });
-    save(); renderLines('exp');
+    state.draft.expenses.push({ id: uid(), date: $('expDate').value, text: '', amount: '' });
+    touch(); renderLines('exp');
     var rows = $('expTable').tBodies[0].rows; rows[rows.length - 1].querySelector('textarea').focus();
   });
 
@@ -505,33 +741,34 @@
   function autoGrow(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
 
   function renderLines(kind) {
-    var lines = kind === 'svc' ? state.invoice.services : state.invoice.expenses;
+    var lines = kind === 'svc' ? state.draft.services : state.draft.expenses;
     var tbody = $(kind + 'Table').tBodies[0];
     tbody.innerHTML = '';
     if (!lines.length) {
-      tbody.appendChild(el('tr', {}, [el('td', { colSpan: 7, className: 'empty', text: 'No lines yet — check items on the left and press "Add checked".' })]));
+      tbody.appendChild(el('tr', {}, [el('td', { colSpan: 7, className: 'empty', text: 'No lines yet — check items above and press "Add checked".' })]));
     }
     lines.forEach(function (l) {
       function inp(field, attrs) {
         var a = Object.assign({ value: l[field] === undefined ? '' : l[field] }, attrs || {});
-        a.oninput = function (e) { l[field] = e.target.value; save(); refreshRow(); renderTotals(); if (e.target.tagName === 'TEXTAREA') autoGrow(e.target); };
-        return el(attrs && attrs.tag === 'textarea' ? 'textarea' : 'input', a);
+        var tag = a.tag === 'textarea' ? 'textarea' : 'input'; delete a.tag;
+        a.oninput = function (e) { l[field] = e.target.value; touch(); refreshRow(); renderTotals(); if (tag === 'textarea') autoGrow(e.target); };
+        return el(tag, a);
       }
       var amtCell = el('td', { className: 'num amt' });
       function refreshRow() {
         amtCell.textContent = kind === 'svc' ? (l.nc ? 'NC  $0.00' : money(svcAmount(l))) : '';
       }
       var remove = el('button', { className: 'icon danger', title: 'Remove line', text: '✕', onclick: function () {
-        lines.splice(lines.indexOf(l), 1); save(); renderLines(kind); renderTotals();
+        lines.splice(lines.indexOf(l), 1); touch(); renderLines(kind); renderTotals();
       } });
       var star = el('button', { className: 'icon', title: 'Save this line to the menu for next time', text: '★', onclick: function () {
-        if (!l.text.trim()) { alert('Type a description first.'); return; }
+        if (!String(l.text || '').trim()) { alert('Type a description first.'); return; }
         editItem(kind, null, l.text, kind === 'svc' ? l.hours : l.amount);
       } });
       var desc = inp('text', { tag: 'textarea', rows: 1, placeholder: 'Description' });
       var tr;
       if (kind === 'svc') {
-        var ncBox = el('input', { type: 'checkbox', checked: !!l.nc, onchange: function (e) { l.nc = e.target.checked; save(); refreshRow(); renderTotals(); } });
+        var ncBox = el('input', { type: 'checkbox', checked: !!l.nc, onchange: function (e) { l.nc = e.target.checked; touch(); refreshRow(); renderTotals(); } });
         tr = el('tr', {}, [
           el('td', {}, [inp('date', { type: 'date' })]),
           el('td', {}, [inp('by')]),
@@ -556,25 +793,45 @@
     });
   }
 
+  // ---------- reduction ----------
+  function syncReductionUI() {
+    var t = $('redType').value;
+    $('redValueLabel').textContent = t === 'hours' ? 'Hours' : t === 'amount' ? 'Amount ($)' : 'Percent (%)';
+    $('redValue').step = t === 'hours' ? '0.1' : t === 'amount' ? '0.01' : '1';
+    $('redRateWrap').classList.toggle('hidden', t !== 'hours');
+    $('redNoteWrap').classList.toggle('hidden', t !== 'hours');
+  }
+  [['redLabel', 'label'], ['redValue', 'value'], ['redRate', 'rate']].forEach(function (p) {
+    $(p[0]).addEventListener('input', function () { state.draft.reduction[p[1]] = $(p[0]).value; touch(); renderTotals(); });
+  });
+  $('redType').addEventListener('change', function () { state.draft.reduction.type = $('redType').value; syncReductionUI(); touch(); renderTotals(); });
+  $('redNote').addEventListener('change', function () { state.draft.reduction.note = $('redNote').checked; touch(); });
+
   // ---------- totals ----------
-  function calc() {
-    var inv = state.invoice;
+  function calc(inv) {
+    var firm = state.settings.firm;
     var hours = 0, labor = 0, exp = 0;
     inv.services.forEach(function (l) { hours += num(l.hours); labor += svcAmount(l); });
     inv.expenses.forEach(function (l) { exp += num(l.amount); });
-    var redH = num(inv.reductionHours);
-    var redRate = inv.reductionRate !== '' ? num(inv.reductionRate) : num(state.firm.rate);
-    var reduction = round2(redH * redRate);
+    labor = round2(labor); exp = round2(exp);
+    var r = inv.reduction || {}, rv = Math.max(0, num(r.value)), reduction = 0, redDetail = '';
+    if (rv) {
+      if (r.type === 'amount') { reduction = round2(rv); }
+      else if (r.type === 'percent') { reduction = round2(labor * Math.min(rv, 100) / 100); redDetail = fmtNum(rv) + '%'; }
+      else { reduction = round2(rv * (r.rate !== '' && r.rate !== undefined ? num(r.rate) : num(firm.rate))); redDetail = fmtHours(rv) + ' hrs'; }
+    }
     var total = round2(labor + exp);
     var prev = num(inv.prevBalance), pay = Math.abs(num(inv.payment));
     return {
-      hours: round2(hours), labor: round2(labor), expenses: round2(exp), total: total,
-      prev: prev, payment: pay, redH: redH, reduction: reduction,
+      hours: round2(hours), labor: labor, expenses: exp, total: total,
+      prev: prev, payment: pay,
+      reduction: reduction, redLabel: (r.label || 'Reduction').trim(), redDetail: redDetail,
+      redHours: r.type === 'hours' ? rv : 0,
       due: round2(total + prev - pay - reduction)
     };
   }
   function renderTotals() {
-    var c = calc(), box = $('totalsBox');
+    var c = calc(state.draft), box = $('totalsBox');
     box.innerHTML = '';
     function row(label, val, cls) {
       box.appendChild(el('div', { className: cls || '', text: label }));
@@ -586,63 +843,336 @@
     row('Total invoice amount', money(c.total));
     row('Previous balance', money(c.prev));
     row('Payment – thank you', money(-c.payment));
-    if (c.redH) row('Voluntary reduction (' + fmtHours(c.redH) + ' h)', money(-c.reduction));
+    if (c.reduction) row(c.redLabel + (c.redDetail ? ' (' + c.redDetail + ')' : ''), money(-c.reduction), 'red');
     row('Balance (amount due)', money(c.due), 'due');
     $('svcHours').textContent = fmtHours(c.hours);
     $('svcTotal').textContent = money(c.labor);
     $('expTotal').textContent = money(c.expenses);
     $('dueMini').textContent = 'Amount due: ' + money(c.due);
+    renderEditingNote();
   }
 
-  // ---------- settings ----------
+  // ---------- saved invoices ----------
+  function findSaved(id) { return state.invoices.find(function (i) { return i.id === id; }); }
+  function saveInvoice(quiet) {
+    var d = state.draft;
+    if (!String(d.invoiceNo || '').trim()) { d.invoiceNo = nextInvoiceNumber(); $('invoiceNo').value = d.invoiceNo; }
+    var dup = state.invoices.find(function (i) { return i.id !== d.id && String(i.invoiceNo).trim() === String(d.invoiceNo).trim(); });
+    if (dup && !confirm('Invoice #' + d.invoiceNo + ' is already used by another saved invoice (' + (dup.clientName || 'no name') + ').\n\nSave anyway with the same number?')) return false;
+    d.dirty = false;
+    var rec = clone(d);
+    rec.savedAt = new Date().toISOString();
+    rec.totals = calc(rec);
+    var i = state.invoices.findIndex(function (x) { return x.id === d.id; });
+    if (i >= 0) state.invoices[i] = rec; else state.invoices.push(rec);
+    recordInvoiceNumber(d.invoiceNo);
+    save(); renderList(); renderEditingNote(); fillNumbering();
+    if (!quiet) toast('Invoice #' + d.invoiceNo + ' saved');
+    return true;
+  }
+  $('btnSaveInvoice').addEventListener('click', function () {
+    if (!state.draft.services.length && !state.draft.expenses.length && !confirm('This invoice has no lines. Save it anyway?')) return;
+    saveInvoice();
+  });
+  function okToLeaveDraft() {
+    var d = state.draft;
+    if (!d.dirty || (!d.services.length && !d.expenses.length && !d.clientName)) return true;
+    return confirm('The invoice you are working on has changes that are not saved to "Saved invoices".\n\nContinue anyway and lose those changes?');
+  }
+  function startNew() {
+    state.draft = freshInvoice();
+    state.draft.invoiceNo = nextInvoiceNumber();
+    save(); renderDraft(); window.scrollTo(0, 0);
+  }
+  $('btnNew').addEventListener('click', function () {
+    if (!okToLeaveDraft()) return;
+    startNew(); toast('New invoice #' + state.draft.invoiceNo);
+  });
+  $('btnGoList').addEventListener('click', function () { $('savedSection').scrollIntoView({ behavior: 'smooth' }); });
+  $('listSearch').addEventListener('input', renderList);
+
+  function renderList() {
+    var q = $('listSearch').value.trim().toLowerCase();
+    var tbody = $('listTable').tBodies[0];
+    tbody.innerHTML = '';
+    $('savedCount').textContent = state.invoices.length ? String(state.invoices.length) : '';
+    var list = state.invoices.slice().sort(function (a, b) {
+      return (b.invoiceDate || '').localeCompare(a.invoiceDate || '') || (b.savedAt || '').localeCompare(a.savedAt || '');
+    }).filter(function (i) {
+      return !q || [i.invoiceNo, i.clientName, i.matter, i.reference].join(' ').toLowerCase().indexOf(q) >= 0;
+    });
+    if (!list.length) {
+      tbody.appendChild(el('tr', {}, [el('td', { colSpan: 6, className: 'empty',
+        text: state.invoices.length ? 'No saved invoices match your search.' : 'No saved invoices yet. They appear here when you download a PDF or press "Save invoice".' })]));
+      return;
+    }
+    list.forEach(function (rec) {
+      var t = calc(rec);
+      tbody.appendChild(el('tr', { className: rec.id === state.draft.id ? 'current' : '' }, [
+        el('td', { text: rec.invoiceNo || '—' }),
+        el('td', { text: usDate(rec.invoiceDate, true) }),
+        el('td', { text: rec.clientName || '' }),
+        el('td', { text: rec.matter || '' }),
+        el('td', { className: 'num', text: money(t.due) }),
+        el('td', { style: 'white-space:nowrap;text-align:right' }, [
+          el('button', { className: 'small', text: 'Open', title: 'Open this invoice to view or change it', onclick: function () { openSaved(rec.id); } }),
+          document.createTextNode(' '),
+          el('button', { className: 'small', text: 'Copy', title: 'Start a new invoice with the same customer and lines', onclick: function () { duplicateSaved(rec.id); } }),
+          document.createTextNode(' '),
+          el('button', { className: 'small', text: 'PDF', title: 'Download this invoice as a PDF', onclick: function () { downloadPdf(findSaved(rec.id)); } }),
+          document.createTextNode(' '),
+          el('button', { className: 'small danger', text: '✕', title: 'Delete this saved invoice', onclick: function () { deleteSaved(rec.id); } })
+        ])
+      ]));
+    });
+  }
+  function openSaved(id) {
+    var rec = findSaved(id); if (!rec) return;
+    if (rec.id !== state.draft.id && !okToLeaveDraft()) return;
+    state.draft = normalizeInvoice(clone(rec));
+    delete state.draft.savedAt; delete state.draft.totals;
+    state.draft.dirty = false;
+    save(); renderDraft(); window.scrollTo(0, 0);
+    toast('Opened invoice #' + rec.invoiceNo);
+  }
+  function duplicateSaved(id) {
+    var rec = findSaved(id); if (!rec) return;
+    if (!okToLeaveDraft()) return;
+    var d = normalizeInvoice(clone(rec));
+    delete d.savedAt; delete d.totals;
+    d.id = uid(); d.invoiceNo = ''; d.invoiceDate = todayISO();
+    d.services.forEach(function (l) { l.id = uid(); });
+    d.expenses.forEach(function (l) { l.id = uid(); });
+    state.draft = d;
+    d.invoiceNo = nextInvoiceNumber();
+    d.dirty = true;
+    save(); renderDraft(); window.scrollTo(0, 0);
+    toast('Copied into new invoice #' + d.invoiceNo + ' — change the dates and lines as needed');
+  }
+  function deleteSaved(id) {
+    var rec = findSaved(id); if (!rec) return;
+    if (!confirm('Delete saved invoice #' + rec.invoiceNo + ' (' + (rec.clientName || 'no name') + ')? This cannot be undone.')) return;
+    state.invoices = state.invoices.filter(function (i) { return i.id !== id; });
+    if (state.draft.id === id) state.draft.dirty = true;
+    save(); renderList(); renderEditingNote();
+  }
+
+  // ---------- settings: firm ----------
   document.querySelectorAll('[data-firm]').forEach(function (inp) {
     var k = inp.getAttribute('data-firm');
     inp.addEventListener('input', function () {
-      state.firm[k] = inp.type === 'number' ? num(inp.value) : inp.value; save(); renderTotals();
+      state.settings.firm[k] = inp.type === 'number' ? num(inp.value) : inp.value; save(); renderTotals();
     });
   });
   function fillFirm() {
-    document.querySelectorAll('[data-firm]').forEach(function (inp) { inp.value = state.firm[inp.getAttribute('data-firm')]; });
+    document.querySelectorAll('[data-firm]').forEach(function (inp) { inp.value = state.settings.firm[inp.getAttribute('data-firm')]; });
   }
   $('btnResetFirm').addEventListener('click', function () {
-    if (!confirm('Reset the letterhead and notes to the original text?')) return;
-    state.firm = Object.assign({}, DEFAULT_FIRM); save(); fillFirm(); renderTotals();
+    if (!confirm('Reset the typed letterhead, rate and notes to the original text?')) return;
+    state.settings.firm = Object.assign({}, DEFAULT_FIRM); save(); fillFirm(); renderTotals();
   });
 
-  // ---------- header buttons ----------
-  $('btnNew').addEventListener('click', function () {
-    if ((state.invoice.services.length || state.invoice.expenses.length) &&
-        !confirm('Start a new invoice? The current lines will be cleared. (Your menu, clients and settings stay.)')) return;
-    var lastNo = state.invoice.invoiceNo;
-    state.invoice = freshInvoice();
-    if (/^\d+$/.test(lastNo)) state.invoice.invoiceNo = String(parseInt(lastNo, 10) + 1);
-    save(); renderAll();
-    window.scrollTo(0, 0);
+  // ---------- settings: numbering ----------
+  function fillNumbering() {
+    $('numPrefix').value = state.settings.numbering.prefix;
+    $('numDigits').value = String(state.settings.numbering.digits);
+    $('numLast').value = state.counters.lastInvoiceNumber || '';
+    $('numNext').textContent = nextInvoiceNumber();
+  }
+  $('numPrefix').addEventListener('input', function () { state.settings.numbering.prefix = $('numPrefix').value; save(); $('numNext').textContent = nextInvoiceNumber(); });
+  $('numDigits').addEventListener('change', function () { state.settings.numbering.digits = parseInt($('numDigits').value, 10); save(); $('numNext').textContent = nextInvoiceNumber(); });
+  $('numLast').addEventListener('input', function () { state.counters.lastInvoiceNumber = $('numLast').value.trim(); save(); $('numNext').textContent = nextInvoiceNumber(); });
+
+  // ---------- settings: letterhead ----------
+  // Stored as: { kind: 'page'|'banner', src: full image (dataURL), top, bottom (fractions of src height, page mode),
+  //              size (fraction of text width, banner mode), img: cropped dataURL, imgW, imgH, srcW, srcH }
+  var MAX_W = 1600;
+  function loadImage(src) {
+    return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src; });
+  }
+  function canvasToJpeg(c) { return c.toDataURL('image/jpeg', 0.9); }
+  function whiteCanvas(w, h) {
+    var c = document.createElement('canvas'); c.width = w; c.height = h;
+    var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); return c;
+  }
+  var pdfjsReady = null;
+  function loadPdfJs() {
+    if (pdfjsReady) return pdfjsReady;
+    pdfjsReady = new Promise(function (res, rej) {
+      try {
+        ['lib-pdf-worker', 'lib-pdf'].forEach(function (id) {
+          var src = $(id); if (!src) throw new Error('PDF reader is missing from this file');
+          var s = document.createElement('script'); s.text = src.textContent; document.head.appendChild(s);
+        });
+        res(window.pdfjsLib);
+      } catch (e) { rej(e); }
+    });
+    return pdfjsReady;
+  }
+  function pdfFirstPageToCanvas(buf) {
+    return loadPdfJs().then(function (pdfjsLib) {
+      return pdfjsLib.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise;
+    }).then(function (pdf) { return pdf.getPage(1); }).then(function (page) {
+      var vp1 = page.getViewport({ scale: 1 });
+      var vp = page.getViewport({ scale: MAX_W / vp1.width });
+      var c = whiteCanvas(Math.round(vp.width), Math.round(vp.height));
+      return page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise.then(function () { return c; });
+    });
+  }
+  function imageToCanvas(dataUrl) {
+    return loadImage(dataUrl).then(function (img) {
+      var s = Math.min(1, MAX_W / img.naturalWidth);
+      var c = whiteCanvas(Math.round(img.naturalWidth * s), Math.round(img.naturalHeight * s));
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return c;
+    });
+  }
+  // Which rows of the canvas have ink? Used to guess where the letterhead is.
+  function inkRows(c) {
+    var g = c.getContext('2d'), w = c.width, h = c.height, data = g.getImageData(0, 0, w, h).data, rows = new Array(h);
+    for (var y = 0; y < h; y++) {
+      var ink = false;
+      for (var x = 0; x < w; x += 2) {
+        var p = (y * w + x) * 4;
+        if (data[p + 3] > 20 && (data[p] + data[p + 1] + data[p + 2]) < 600) { ink = true; break; }
+      }
+      rows[y] = ink;
+    }
+    return rows;
+  }
+  function inkCols(c, y0, y1) {
+    var g = c.getContext('2d'), w = c.width, data = g.getImageData(0, y0, w, y1 - y0).data, h = y1 - y0, L = w, R = -1;
+    for (var y = 0; y < h; y += 2) for (var x = 0; x < w; x++) {
+      var p = (y * w + x) * 4;
+      if (data[p + 3] > 20 && (data[p] + data[p + 1] + data[p + 2]) < 600) { if (x < L) L = x; if (x > R) R = x; }
+    }
+    return R < 0 ? [0, w] : [L, R + 1];
+  }
+  // For a whole page: the letterhead is the first block of ink from the top, ending at a big blank gap.
+  function guessHeaderBlock(rows) {
+    var h = rows.length, first = rows.indexOf(true);
+    if (first < 0) return [0, Math.round(h * 0.15)];
+    var gapNeeded = Math.round(h * 0.035), gap = 0, lastInk = first;
+    for (var y = first; y < h; y++) {
+      if (rows[y]) { lastInk = y; gap = 0; } else if (++gap >= gapNeeded) break;
+    }
+    return [first, lastInk + 1];
+  }
+  function handleLetterheadFile(file) {
+    if (!file) return;
+    var isPdf = file.type === 'application/pdf' || /\.pdf$/i.test(file.name);
+    if (!isPdf && !/^image\/(png|jpe?g)$/.test(file.type)) { alert('Please choose a PNG, JPG or PDF file.'); return; }
+    var reader = new FileReader();
+    reader.onerror = function () { alert('Could not read that file.'); };
+    reader.onload = function () {
+      $('lhPreview').textContent = 'Reading letterhead…';
+      var p = isPdf ? pdfFirstPageToCanvas(reader.result) : imageToCanvas(reader.result);
+      p.then(function (c) {
+        var pageLike = isPdf || c.height / c.width > 1.15;
+        var lh = { kind: pageLike ? 'page' : 'banner', srcW: c.width, srcH: c.height, size: 1 };
+        if (pageLike) {
+          var b = guessHeaderBlock(inkRows(c));
+          var padPx = Math.round(c.height * 0.006);
+          lh.top = Math.max(0, (b[0] - padPx) / c.height);
+          lh.bottom = Math.min(1, (b[1] + padPx) / c.height);
+          lh.src = c.toDataURL('image/jpeg', 0.85);
+        } else {
+          // banner: trim surrounding white space
+          var rows = inkRows(c), y0 = Math.max(0, rows.indexOf(true)), y1 = rows.lastIndexOf(true) + 1 || c.height;
+          var xs = inkCols(c, y0, y1), pad = 6;
+          var t = whiteCanvas(xs[1] - xs[0] + pad * 2, y1 - y0 + pad * 2);
+          t.getContext('2d').drawImage(c, xs[0], y0, xs[1] - xs[0], y1 - y0, pad, pad, xs[1] - xs[0], y1 - y0);
+          lh.src = canvasToJpeg(t); lh.srcW = t.width; lh.srcH = t.height;
+          lh.size = Math.min(1, t.width / (MAX_W * 0.8));
+        }
+        return cropLetterhead(lh);
+      }).then(function (lh) {
+        state.settings.letterhead = lh;
+        if (save()) toast('Letterhead saved');
+        renderLetterhead();
+      }).catch(function (e) {
+        console.error(e);
+        alert('Sorry, that letterhead could not be read' + (isPdf ? ' as a PDF. Try saving it as a PNG or JPG instead.' : '.'));
+        renderLetterhead();
+      });
+    };
+    if (isPdf) reader.readAsArrayBuffer(file); else reader.readAsDataURL(file);
+  }
+  function cropLetterhead(lh) {
+    if (lh.kind !== 'page') { lh.img = lh.src; lh.imgW = lh.srcW; lh.imgH = lh.srcH; return Promise.resolve(lh); }
+    return loadImage(lh.src).then(function (img) {
+      var y0 = Math.round(lh.top * lh.srcH), y1 = Math.max(y0 + 4, Math.round(lh.bottom * lh.srcH));
+      var c = whiteCanvas(lh.srcW, y1 - y0);
+      c.getContext('2d').drawImage(img, 0, y0, lh.srcW, y1 - y0, 0, 0, lh.srcW, y1 - y0);
+      lh.img = canvasToJpeg(c); lh.imgW = c.width; lh.imgH = c.height;
+      return lh;
+    });
+  }
+  function renderLetterhead() {
+    var lh = state.settings.letterhead, box = $('lhPreview');
+    box.innerHTML = '';
+    $('lhControls').classList.toggle('hidden', !lh);
+    if (!lh) { box.appendChild(el('div', { className: 'empty', text: 'No letterhead uploaded — the typed letterhead below is used.' })); return; }
+    box.appendChild(el('img', { src: lh.img, alt: 'Letterhead preview' }));
+    $('lhPageControls').classList.toggle('hidden', lh.kind !== 'page');
+    $('lhSizeWrap').classList.toggle('hidden', lh.kind === 'page');
+    $('lhTop').value = (lh.top || 0) * 100; $('lhBottom').value = (lh.bottom || 0) * 100;
+    $('lhTopVal').textContent = Math.round((lh.top || 0) * 100) + '% down the page';
+    $('lhBottomVal').textContent = Math.round((lh.bottom || 0) * 100) + '% down the page';
+    $('lhSize').value = Math.round((lh.size || 1) * 100); $('lhSizeVal').textContent = Math.round((lh.size || 1) * 100) + '%';
+  }
+  $('lhFile').addEventListener('change', function () { handleLetterheadFile($('lhFile').files[0]); $('lhFile').value = ''; });
+  $('lhRemove').addEventListener('click', function () {
+    if (!confirm('Remove the uploaded letterhead? The typed letterhead will be used instead.')) return;
+    state.settings.letterhead = null; save(); renderLetterhead();
   });
+  var cropTimer;
+  function onCropSlider() {
+    var lh = state.settings.letterhead; if (!lh) return;
+    var top = num($('lhTop').value) / 100, bottom = num($('lhBottom').value) / 100;
+    if (bottom <= top + 0.02) bottom = top + 0.02;
+    lh.top = top; lh.bottom = Math.min(1, bottom);
+    $('lhTopVal').textContent = Math.round(top * 100) + '% down the page';
+    $('lhBottomVal').textContent = Math.round(lh.bottom * 100) + '% down the page';
+    clearTimeout(cropTimer);
+    cropTimer = setTimeout(function () { cropLetterhead(lh).then(function () { save(); renderLetterhead(); }); }, 120);
+  }
+  $('lhTop').addEventListener('input', onCropSlider);
+  $('lhBottom').addEventListener('input', onCropSlider);
+  $('lhSize').addEventListener('input', function () {
+    var lh = state.settings.letterhead; if (!lh) return;
+    lh.size = num($('lhSize').value) / 100; $('lhSizeVal').textContent = Math.round(lh.size * 100) + '%'; save();
+  });
+
+  // ---------- backup / restore ----------
   $('btnBackup').addEventListener('click', function () {
-    var data = { app: 'invoice-maker', version: 1, savedAt: new Date().toISOString(),
-      firm: state.firm, serviceMenu: state.serviceMenu, expenseMenu: state.expenseMenu, clients: state.clients };
-    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var data = clone(state);
+    data.app = 'invoice-maker';
+    data.version = DATA_VERSION;
+    data.exportedAt = new Date().toISOString();
+    var blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
     downloadBlob(blob, 'InvoiceMaker_backup_' + todayISO() + '.json');
+    toast('Backup file saved to your Downloads');
   });
   $('btnRestore').addEventListener('click', function () { $('restoreFile').click(); });
   $('restoreFile').addEventListener('change', function () {
     var f = $('restoreFile').files[0]; if (!f) return;
     var r = new FileReader();
     r.onload = function () {
-      try {
-        var d = JSON.parse(r.result);
-        if (d.app !== 'invoice-maker') throw new Error('not a backup');
-        if (!confirm('Replace your current menu, clients and settings with this backup?')) return;
-        state.firm = Object.assign({}, DEFAULT_FIRM, d.firm || {});
-        state.serviceMenu = d.serviceMenu || []; state.expenseMenu = d.expenseMenu || []; state.clients = d.clients || [];
-        save(); renderAll(); toast('Backup restored');
-      } catch (e) { alert('That file is not an Invoice Maker backup.'); }
+      var d;
+      try { d = JSON.parse(r.result); } catch (e) { d = null; }
       $('restoreFile').value = '';
+      if (!d || d.app !== 'invoice-maker') { alert('That file is not an Invoice Maker backup.'); return; }
+      var incoming = migrate(d);
+      var msg = 'This backup has:\n  • ' + incoming.invoices.length + ' saved invoice(s)\n  • ' + incoming.customers.length +
+        ' customer(s)\n  • ' + incoming.settings.serviceMenu.length + ' service menu item(s)\n\nReplace everything here with this backup?';
+      if (!confirm(msg)) return;
+      state = incoming;
+      if (!d.draft) { state.draft = freshInvoice(); state.draft.invoiceNo = nextInvoiceNumber(); }
+      save(); renderAll(); toast('Backup restored');
     };
     r.readAsText(f);
   });
-
   function downloadBlob(blob, name) {
     var url = URL.createObjectURL(blob);
     var a = el('a', { href: url, download: name });
@@ -651,8 +1181,8 @@
   }
 
   // ---------- PDF ----------
-  function buildPdf() {
-    var inv = state.invoice, firm = state.firm, c = calc();
+  function buildPdf(inv) {
+    var firm = state.settings.firm, lh = state.settings.letterhead, c = calc(inv);
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' });
     var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
     var M = 54, FONT = 'times';
@@ -663,29 +1193,47 @@
     }
 
     // letterhead
-    if (firm.line1) center(firm.line1, 11, 'normal');
-    if (firm.name) center(firm.name, 16, 'bold');
-    if (firm.line3) center(firm.line3, 11, 'normal');
-    String(firm.address || '').split('\n').filter(Boolean).forEach(function (a) { center(a.trim(), 10.5); });
-    var contact = [firm.phone, firm.email].filter(Boolean).join('   |   ');
-    if (contact) center(contact, 10.5);
-    y += 4;
-    doc.setLineWidth(0.8); doc.line(M, y, W - M, y);
-    y += 26;
+    if (lh && lh.img) {
+      if (lh.kind === 'page') {
+        var s = W / lh.srcW, ih = lh.imgH * s, iy = lh.top * lh.srcH * s;
+        doc.addImage(lh.img, 'JPEG', 0, iy, W, ih);
+        y = Math.max(iy + ih + 22, 80);
+      } else {
+        var iw = (W - 2 * M) * (lh.size || 1), bh = iw * lh.imgH / lh.imgW;
+        if (bh > 170) { bh = 170; iw = bh * lh.imgW / lh.imgH; }
+        doc.addImage(lh.img, 'JPEG', (W - iw) / 2, 36, iw, bh);
+        y = 36 + bh + 26;
+      }
+    } else {
+      if (firm.line1) center(firm.line1, 11, 'normal');
+      if (firm.name) center(firm.name, 16, 'bold');
+      if (firm.line3) center(firm.line3, 11, 'normal');
+      String(firm.address || '').split('\n').filter(Boolean).forEach(function (a) { center(a.trim(), 10.5); });
+      var contact = [firm.phone, firm.email].filter(Boolean).join('   |   ');
+      if (contact) center(contact, 10.5);
+      y += 4;
+      doc.setLineWidth(0.8); doc.line(M, y, W - M, y);
+      y += 26;
+    }
 
     // bill-to (left) & invoice box (right)
     var topY = y;
     doc.setFont(FONT, 'normal'); doc.setFontSize(10.5);
     doc.text('Invoice submitted to:', M, y); y += 15;
     doc.setFont(FONT, 'bold'); doc.setFontSize(12);
-    var leftW = 280;
+    var leftW = 270;
     doc.splitTextToSize(inv.clientName || '', leftW).forEach(function (t) { doc.text(t, M + 6, y); y += 14; });
     doc.setFont(FONT, 'normal'); doc.setFontSize(10.5);
-    doc.splitTextToSize(inv.matter || '', leftW).forEach(function (t) { doc.text(t, M + 6, y); y += 13; });
+    String(inv.address || '').split('\n').forEach(function (a) {
+      doc.splitTextToSize(a.trim(), leftW).forEach(function (t) { if (t) { doc.text(t, M + 6, y); y += 13; } });
+    });
+    if (inv.matter) {
+      y += 2;
+      doc.splitTextToSize(inv.matter, leftW).forEach(function (t) { doc.text(t, M + 6, y); y += 13; });
+    }
     var leftEnd = y;
 
-    var rx = W - M;
-    var ry = topY;
+    var rx = W - M, ry = topY;
     doc.setFont(FONT, 'bold'); doc.setFontSize(15);
     doc.text('Invoice' + (inv.invoiceNo ? ' # ' + inv.invoiceNo : ''), rx, ry + 2, { align: 'right' });
     ry += 12;
@@ -694,15 +1242,15 @@
     var through = inv.fromDate && inv.toDate ? usDate(inv.fromDate, true) + ' – ' + usDate(inv.toDate, true)
                 : usDate(inv.toDate || inv.fromDate, true);
     if (through) boxRows.push([inv.fromDate && inv.toDate ? 'For Services:' : 'Services Through:', through]);
-    var bw = 200, bh = boxRows.length * 13 + 10, bx = rx - bw;
-    doc.setLineWidth(0.6); doc.rect(bx, ry, bw, bh);
+    var bw = 200, bh2 = boxRows.length * 13 + 10, bx = rx - bw;
+    doc.setLineWidth(0.6); doc.rect(bx, ry, bw, bh2);
     doc.setFont(FONT, 'normal'); doc.setFontSize(10);
     boxRows.forEach(function (r, i) {
       var ly = ry + 15 + i * 13;
       doc.text(r[0], bx + 92, ly, { align: 'right' });
       doc.text(r[1], bx + 98, ly);
     });
-    y = Math.max(leftEnd, ry + bh) + 16;
+    y = Math.max(leftEnd, ry + bh2) + 16;
 
     if (firm.headNote) { doc.setFont(FONT, 'italic'); doc.setFontSize(9.5); doc.text(firm.headNote, M, y); y += 10; }
 
@@ -711,6 +1259,12 @@
     var body = [];
     var services = inv.services.slice().sort(sortByDate);
     var expenses = inv.expenses.slice().sort(sortByDate);
+    function subtotalRow(label, h, amt) {
+      var st = { fontStyle: 'bold', cellPadding: { top: 5, bottom: 4, left: 2, right: 2 } };
+      return [{ content: '', colSpan: 2, styles: st }, { content: label, styles: Object.assign({ halign: 'right' }, st) },
+              { content: h, styles: Object.assign({ halign: 'right' }, st) }, { content: '', styles: st },
+              { content: amt, styles: Object.assign({ halign: 'right' }, st) }];
+    }
     if (services.length) {
       body.push([{ content: 'In Reference To:  ' + (ref ? ref + ' ' : '') + '(Labor)', colSpan: 6, styles: { fontStyle: 'bold', cellPadding: { top: 8, bottom: 4, left: 0, right: 2 } } }]);
       services.forEach(function (l) {
@@ -723,12 +1277,6 @@
       body.push([{ content: 'In Reference To:  ' + (ref ? ref + ' ' : '') + '(Expenses)', colSpan: 6, styles: { fontStyle: 'bold', cellPadding: { top: 12, bottom: 4, left: 0, right: 2 } } }]);
       expenses.forEach(function (l) { body.push([usDate(l.date), '', l.text || '', '', '', money(num(l.amount))]); });
       body.push(subtotalRow('Expense total', '', money(c.expenses)));
-    }
-    function subtotalRow(label, h, amt) {
-      var s = { fontStyle: 'bold', cellPadding: { top: 5, bottom: 4, left: 2, right: 2 } };
-      return [{ content: '', colSpan: 2, styles: s }, { content: label, styles: Object.assign({ halign: 'right' }, s) },
-              { content: h, styles: Object.assign({ halign: 'right' }, s) }, { content: '', styles: s },
-              { content: amt, styles: Object.assign({ halign: 'right' }, s) }];
     }
 
     doc.autoTable({
@@ -758,6 +1306,8 @@
     y = doc.lastAutoTable.finalY + 14;
 
     // totals
+    // The reduction note talks about hours, so it is only printed for an hours reduction.
+    var printNote = c.reduction && c.redHours && inv.reduction.note && firm.reductionNote;
     var tRows = [
       ['Total Hours:', fmtHours(c.hours)],
       ['Total Labor:', money(c.labor)],
@@ -766,16 +1316,15 @@
       ['Previous Balance:', money(c.prev)],
       ['Payment - thank you:', money(-c.payment)]
     ];
-    if (c.redH) tRows.push(['*Voluntary Reduction (' + fmtHours(c.redH) + ' hrs):', money(-c.reduction)]);
+    if (c.reduction) tRows.push([(printNote ? '*' : '') + c.redLabel + (c.redDetail ? ' (' + c.redDetail + ')' : '') + ':', money(-c.reduction)]);
     tRows.push(['Balance (Amount Due):', money(c.due)]);
     var last = tRows.length - 1;
     if (y + tRows.length * 16 + 20 > H - 54) { doc.addPage(); y = 54; }
     doc.autoTable({
-      body: tRows, startY: y, theme: 'plain', tableWidth: 260,
-      margin: { left: W - M - 260, right: M, bottom: 54, top: 54 },
-      rowPageBreak: 'avoid',
+      body: tRows, startY: y, theme: 'plain', tableWidth: 280,
+      margin: { left: W - M - 280, right: M, bottom: 54, top: 54 },
       styles: { font: FONT, fontSize: 10.5, cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }, textColor: 20 },
-      columnStyles: { 0: { halign: 'right', cellWidth: 170 }, 1: { halign: 'right', cellWidth: 90 } },
+      columnStyles: { 0: { halign: 'right', cellWidth: 190 }, 1: { halign: 'right', cellWidth: 90 } },
       didParseCell: function (d) {
         if (d.row.index === last) { d.cell.styles.fontStyle = 'bold'; d.cell.styles.fontSize = 11.5; d.cell.styles.cellPadding = { top: 6, bottom: 2, left: 2, right: 2 }; }
       },
@@ -791,7 +1340,12 @@
     var notes = [];
     if (firm.payable) notes.push({ text: firm.payable, style: 'bold', size: 10.5 });
     if (inv.showIncrement && firm.incrementNote) notes.push({ text: firm.incrementNote, style: 'normal', size: 9 });
-    if (c.redH && firm.reductionNote) notes.push({ text: firm.reductionNote.split('{hours}').join(fmtHours(c.redH)), style: 'normal', size: 9 });
+    if (printNote) {
+      notes.push({ style: 'normal', size: 9, text: firm.reductionNote
+        .split('{hours}').join(fmtHours(c.redHours))
+        .split('{amount}').join(money(c.reduction))
+        .split('{name}').join(c.redLabel) });
+    }
     notes.forEach(function (n) {
       doc.setFont(FONT, n.style); doc.setFontSize(n.size);
       String(n.text).split('\n').forEach(function (para) {
@@ -813,43 +1367,59 @@
     }
     return doc;
   }
-  function fileName() {
-    var d = (state.invoice.invoiceDate || todayISO()).replace(/-/g, '');
-    var who = (state.invoice.clientName || 'Client').replace(/^(mr|mrs|ms|dr)\.?\s+/i, '')
+  function fileName(inv) {
+    var d = (inv.invoiceDate || todayISO()).replace(/-/g, '');
+    var who = (inv.clientName || 'Client').replace(/^(mr|mrs|ms|dr)\.?\s+/i, '')
       .replace(/[^A-Za-z0-9]+/g, '_').replace(/^_+|_+$/g, '');
     return 'Invoice_' + d + '_' + (who || 'Client') + '.pdf';
   }
-  function ready() {
+  function pdfLibOk() {
     if (!window.jspdf || !window.jspdf.jsPDF) { alert('The PDF maker failed to load. Try re-opening this file.'); return false; }
-    if (!state.invoice.clientName.trim()) {
-      if (!confirm('There is no client name. Make the invoice anyway?')) { $('clientName').focus(); return false; }
-    }
-    if (!state.invoice.services.length && !state.invoice.expenses.length) { alert('Add at least one service or expense first.'); return false; }
     return true;
   }
+  function draftReady() {
+    if (!pdfLibOk()) return false;
+    if (!state.draft.clientName.trim()) {
+      if (!confirm('There is no customer name. Make the invoice anyway?')) { $('clientName').focus(); return false; }
+    }
+    if (!state.draft.services.length && !state.draft.expenses.length) { alert('Add at least one service or expense first.'); return false; }
+    return true;
+  }
+  function downloadPdf(inv) {
+    try { buildPdf(inv).save(fileName(inv)); return true; }
+    catch (e) { console.error(e); alert('Something went wrong making the PDF: ' + e.message); return false; }
+  }
   $('btnPdf').addEventListener('click', function () {
-    if (!ready()) return;
-    try { buildPdf().save(fileName()); toast('Saved ' + fileName()); }
-    catch (e) { console.error(e); alert('Something went wrong making the PDF: ' + e.message); }
+    if (!draftReady()) return;
+    if (!saveInvoice(true)) return;   // every downloaded invoice is kept in "Saved invoices"
+    if (downloadPdf(state.draft)) toast('Downloaded ' + fileName(state.draft) + ' and saved invoice #' + state.draft.invoiceNo);
   });
   $('btnPreview').addEventListener('click', function () {
-    if (!ready()) return;
+    if (!draftReady()) return;
     var w = window.open('', '_blank');
-    var url = buildPdf().output('bloburl');
+    var url = buildPdf(state.draft).output('bloburl');
     if (w) w.location.href = url; else window.location.href = url;
   });
 
   // ---------- init ----------
+  function renderDraft() {
+    fillInvoiceFields(); renderCustomers();
+    renderLines('svc'); renderLines('exp'); renderTotals(); renderList(); fillNumbering();
+  }
   function renderAll() {
-    fillInvoiceFields(); fillFirm(); renderClients();
+    fillFirm(); renderLetterhead();
     renderMenu('svc'); renderMenu('exp');
-    renderLines('svc'); renderLines('exp'); renderTotals();
+    renderDraft();
   }
   load();
+  if (!state.draft.invoiceNo && !state.draft.services.length && !state.draft.expenses.length) state.draft.invoiceNo = nextInvoiceNumber();
+  save();
   $('svcDate').value = todayISO();
   $('expDate').value = todayISO();
-  bindInvoiceFields();
   renderAll();
+  window.addEventListener('storage', function (e) {
+    if (e.key === STORE_KEY) { load(); renderAll(); toast('Updated from another open window'); }
+  });
   window.__invoiceMaker = { state: function () { return state; }, buildPdf: buildPdf, calc: calc };
 })();
 </script>
