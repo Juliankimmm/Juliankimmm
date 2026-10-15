@@ -274,7 +274,7 @@
               <label class="f">Bottom edge of letterhead: <span id="lhBottomVal"></span><input type="range" id="lhBottom" min="2" max="80" step="0.5"></label>
               <div class="hint" style="margin:0">Move the sliders so the preview shows just the letterhead. It prints at the same place and size as on your paper.</div>
             </div>
-            <label class="f" id="lhSizeWrap">Size on the invoice: <span id="lhSizeVal"></span><input type="range" id="lhSize" min="30" max="100" step="1"></label>
+            <label class="f" id="lhSizeWrap">Size on the invoice: <span id="lhSizeVal"></span><input type="range" id="lhSize" min="30" max="113" step="1"></label>
             <div class="row" style="margin-top:0">
               <button id="lhRemove" class="danger">Remove letterhead (use typed text instead)</button>
             </div>
@@ -285,15 +285,20 @@
           <div class="lh-preview" id="lhPreview"></div>
         </div>
       </div>
-      <p class="hint" style="margin-top:12px">If there is no uploaded letterhead, this typed letterhead is used:</p>
+      <p class="hint" style="margin-top:12px">If there is no uploaded letterhead, this letterhead is printed as sharp text. Change any line here (press <b>Preview</b> at the bottom to see it). Leave a box empty to leave it out.</p>
       <div class="grid">
-        <label class="f">Line 1 (small) <input data-firm="line1"></label>
-        <label class="f">Name (large, bold) <input data-firm="name"></label>
-        <label class="f">Line 3 (small) <input data-firm="line3"></label>
-        <label class="f">Address (one line per row) <textarea data-firm="address" rows="2"></textarea></label>
-        <label class="f">Phone <input data-firm="phone"></label>
-        <label class="f">Email <input data-firm="email"></label>
+        <label class="f">Above the name <input data-firm="line1"></label>
+        <label class="f">Firm name (large, bold) <input data-firm="name"></label>
+        <label class="f">Under the line <input data-firm="line3"></label>
       </div>
+      <div class="grid" style="margin-top:12px">
+        <label class="f">Middle (one line per row) <textarea data-firm="center" rows="5"></textarea></label>
+        <label class="f">Left side <textarea data-firm="left" rows="2"></textarea></label>
+        <label class="f">Left side — small print <input data-firm="leftNote"></label>
+        <label class="f">Right side (one line per row) <textarea data-firm="right" rows="4"></textarea></label>
+        <label class="f">Right side — bottom note <input data-firm="rightNote"></label>
+      </div>
+      <label class="check" style="margin-top:12px"><input type="checkbox" data-firm="smallCaps"> Small-capitals lettering (like the printed stationery)</label>
 
       <h3>Invoice numbers</h3>
       <div class="grid">
@@ -317,7 +322,7 @@
         <label class="f">Billing increment note <textarea data-firm="incrementNote" rows="2"></textarea></label>
         <label class="f">Reduction note — <i>{hours}</i>, <i>{amount}</i> and <i>{name}</i> are filled in for you <textarea data-firm="reductionNote" rows="4"></textarea></label>
       </div>
-      <div class="row"><button id="btnResetFirm" class="danger">Reset typed letterhead &amp; notes to original</button></div>
+      <div class="row"><button id="btnResetFirm" class="danger">Reset letterhead text &amp; notes to original</button></div>
     </details>
   </section>
 </main>
@@ -358,9 +363,12 @@
     line1: 'Law Offices of',
     name: 'Hyung Seok Kim',
     line3: 'Limited Liability Company',
-    address: '460 Bergen Blvd Suite 230\nPalisades Park, NJ 07650',
-    phone: '(201) 585-0700',
-    email: 'James@hskimlaw.com',
+    center: '460 Bergen Boulevard Suite 230\nPalisades Park, NJ 07650\n(201) 585-0700\nFacsimile (201) 301-8893\nE-mail: James@hskimlaw.com',
+    left: 'Hyung (James) S. Kim *',
+    leftNote: '* Member of NJ and NY Bars',
+    right: 'New York Office*\n61-43 186th St. Suite 310\nFresh Meadows, NY 11365\n(718) 939-0700',
+    rightNote: '*Please Reply to NJ Office',
+    smallCaps: true,
     rate: 500,
     by: 'HSK',
     terms: '',
@@ -467,6 +475,21 @@
     };
   }
 
+  // Before the three-column letterhead, the typed letterhead had address / phone / email boxes.
+  var OLD_LETTERHEAD = { address: '460 Bergen Blvd Suite 230\nPalisades Park, NJ 07650', phone: '(201) 585-0700', email: 'James@hskimlaw.com' };
+  function upgradeFirm(saved) {
+    var f = Object.assign({}, saved || {});
+    if (!('center' in f) && ('address' in f || 'phone' in f || 'email' in f)) {
+      var changed = ['address', 'phone', 'email'].some(function (k) { return k in f && f[k] !== OLD_LETTERHEAD[k]; });
+      if (changed) {
+        f.center = String(f.address || '').split('\n').concat([f.phone, f.email ? 'E-mail: ' + f.email : ''])
+          .map(function (l) { return String(l || '').trim(); }).filter(Boolean).join('\n');
+      }
+    }
+    delete f.address; delete f.phone; delete f.email;
+    return Object.assign({}, DEFAULT_FIRM, f);
+  }
+
   function normalizeInvoice(inv) {
     var out = Object.assign(freshInvoice(), inv || {});
     out.reduction = Object.assign(freshInvoice().reduction, (inv && inv.reduction) || {});
@@ -480,7 +503,7 @@
     if (!data || typeof data !== 'object') return s;
     if (data.version >= 2 && data.settings) {
       var st = data.settings;
-      s.settings.firm = Object.assign({}, DEFAULT_FIRM, st.firm || {});
+      s.settings.firm = upgradeFirm(st.firm);
       s.settings.letterhead = st.letterhead || null;
       if (Array.isArray(st.serviceMenu)) s.settings.serviceMenu = st.serviceMenu;
       if (Array.isArray(st.expenseMenu)) s.settings.expenseMenu = st.expenseMenu;
@@ -492,7 +515,7 @@
       return s;
     }
     // version 1 (first release)
-    s.settings.firm = Object.assign({}, DEFAULT_FIRM, data.firm || {});
+    s.settings.firm = upgradeFirm(data.firm);
     if (data.firm && data.firm.reductionNote) s.settings.firm.reductionNote = data.firm.reductionNote.replace(/^\*Voluntary Reduction:/, '*{name}:');
     if (Array.isArray(data.serviceMenu)) s.settings.serviceMenu = data.serviceMenu;
     if (Array.isArray(data.expenseMenu)) s.settings.expenseMenu = data.expenseMenu;
@@ -960,15 +983,19 @@
   // ---------- settings: firm ----------
   document.querySelectorAll('[data-firm]').forEach(function (inp) {
     var k = inp.getAttribute('data-firm');
-    inp.addEventListener('input', function () {
-      state.settings.firm[k] = inp.type === 'number' ? num(inp.value) : inp.value; save(); renderTotals();
+    inp.addEventListener(inp.type === 'checkbox' ? 'change' : 'input', function () {
+      state.settings.firm[k] = inp.type === 'checkbox' ? inp.checked : inp.type === 'number' ? num(inp.value) : inp.value;
+      save(); renderTotals();
     });
   });
   function fillFirm() {
-    document.querySelectorAll('[data-firm]').forEach(function (inp) { inp.value = state.settings.firm[inp.getAttribute('data-firm')]; });
+    document.querySelectorAll('[data-firm]').forEach(function (inp) {
+      var v = state.settings.firm[inp.getAttribute('data-firm')];
+      if (inp.type === 'checkbox') inp.checked = !!v; else inp.value = v === undefined ? '' : v;
+    });
   }
   $('btnResetFirm').addEventListener('click', function () {
-    if (!confirm('Reset the typed letterhead, rate and notes to the original text?')) return;
+    if (!confirm('Reset the letterhead text, rate and notes to the original?')) return;
     state.settings.firm = Object.assign({}, DEFAULT_FIRM); save(); fillFirm(); renderTotals();
   });
 
@@ -991,6 +1018,7 @@
     return new Promise(function (res, rej) { var i = new Image(); i.onload = function () { res(i); }; i.onerror = rej; i.src = src; });
   }
   function canvasToJpeg(c) { return c.toDataURL('image/jpeg', 0.9); }
+  function imgFormat(dataUrl) { return /^data:image\/png/i.test(dataUrl) ? 'PNG' : 'JPEG'; }
   function whiteCanvas(w, h) {
     var c = document.createElement('canvas'); c.width = w; c.height = h;
     var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, w, h); return c;
@@ -1082,8 +1110,8 @@
           var xs = inkCols(c, y0, y1), pad = 6;
           var t = whiteCanvas(xs[1] - xs[0] + pad * 2, y1 - y0 + pad * 2);
           t.getContext('2d').drawImage(c, xs[0], y0, xs[1] - xs[0], y1 - y0, pad, pad, xs[1] - xs[0], y1 - y0);
-          lh.src = canvasToJpeg(t); lh.srcW = t.width; lh.srcH = t.height;
-          lh.size = Math.min(1, t.width / (MAX_W * 0.8));
+          lh.src = t.toDataURL('image/png'); lh.srcW = t.width; lh.srcH = t.height;
+          lh.size = 1;
         }
         return cropLetterhead(lh);
       }).then(function (lh) {
@@ -1181,39 +1209,38 @@
   }
 
   // ---------- PDF ----------
+  /*TYPED_LETTERHEAD_START*/
+  function drawTypedLetterhead(doc, f, W, M) {
+    var y = 54;
+    function center(t, size, style) { doc.setFont('times', style || 'normal'); doc.setFontSize(size); doc.text(t, W / 2, y, { align: 'center' }); y += size + 3; }
+    if (f.line1) center(f.line1, 11);
+    if (f.name) center(f.name, 16, 'bold');
+    if (f.line3) center(f.line3, 11);
+    String(f.center || '').split('\n').filter(Boolean).forEach(function (a) { center(a, 10.5); });
+    return y;
+  }
+  /*TYPED_LETTERHEAD_END*/
   function buildPdf(inv) {
     var firm = state.settings.firm, lh = state.settings.letterhead, c = calc(inv);
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' });
     var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
     var M = 54, FONT = 'times';
     var y = 54;
-    function center(text, size, style) {
-      doc.setFont(FONT, style || 'normal'); doc.setFontSize(size);
-      doc.text(text, W / 2, y, { align: 'center' }); y += size + 3;
-    }
 
     // letterhead
     if (lh && lh.img) {
       if (lh.kind === 'page') {
         var s = W / lh.srcW, ih = lh.imgH * s, iy = lh.top * lh.srcH * s;
-        doc.addImage(lh.img, 'JPEG', 0, iy, W, ih);
+        doc.addImage(lh.img, imgFormat(lh.img), 0, iy, W, ih);
         y = Math.max(iy + ih + 22, 80);
       } else {
         var iw = (W - 2 * M) * (lh.size || 1), bh = iw * lh.imgH / lh.imgW;
         if (bh > 170) { bh = 170; iw = bh * lh.imgW / lh.imgH; }
-        doc.addImage(lh.img, 'JPEG', (W - iw) / 2, 36, iw, bh);
+        doc.addImage(lh.img, imgFormat(lh.img), (W - iw) / 2, 36, iw, bh);
         y = 36 + bh + 26;
       }
     } else {
-      if (firm.line1) center(firm.line1, 11, 'normal');
-      if (firm.name) center(firm.name, 16, 'bold');
-      if (firm.line3) center(firm.line3, 11, 'normal');
-      String(firm.address || '').split('\n').filter(Boolean).forEach(function (a) { center(a.trim(), 10.5); });
-      var contact = [firm.phone, firm.email].filter(Boolean).join('   |   ');
-      if (contact) center(contact, 10.5);
-      y += 4;
-      doc.setLineWidth(0.8); doc.line(M, y, W - M, y);
-      y += 26;
+      y = Math.max(drawTypedLetterhead(doc, firm, W, M), 40) + 26;
     }
 
     // bill-to (left) & invoice box (right)
