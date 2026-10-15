@@ -1209,17 +1209,8 @@
   }
 
   // ---------- PDF ----------
-  /*TYPED_LETTERHEAD_START*/
-  function drawTypedLetterhead(doc, f, W, M) {
-    var y = 54;
-    function center(t, size, style) { doc.setFont('times', style || 'normal'); doc.setFontSize(size); doc.text(t, W / 2, y, { align: 'center' }); y += size + 3; }
-    if (f.line1) center(f.line1, 11);
-    if (f.name) center(f.name, 16, 'bold');
-    if (f.line3) center(f.line3, 11);
-    String(f.center || '').split('\n').filter(Boolean).forEach(function (a) { center(a, 10.5); });
-    return y;
-  }
-  /*TYPED_LETTERHEAD_END*/
+  // drawTypedLetterhead(doc, firm, W, M) is inserted here from src/letterhead.js by build.py
+  /*TYPED_LETTERHEAD*/
   function buildPdf(inv) {
     var firm = state.settings.firm, lh = state.settings.letterhead, c = calc(inv);
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' });

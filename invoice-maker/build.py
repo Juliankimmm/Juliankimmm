@@ -18,6 +18,9 @@ libs = (
     + lib("pdf.min.js", "text/plain", "lib-pdf")
 )
 html = (here / "src" / "app.html").read_text(encoding="utf-8")
-assert "<!--LIBS-->" in html
+assert "<!--LIBS-->" in html and "/*TYPED_LETTERHEAD*/" in html
+# The typed (vector) letterhead lives in its own file so it can be tuned and tested on its own.
+letterhead = (here / "src" / "letterhead.js").read_text(encoding="utf-8")
+html = html.replace("/*TYPED_LETTERHEAD*/", letterhead.strip().replace("\n", "\n  "), 1)
 (here / "InvoiceMaker.html").write_text(html.replace("<!--LIBS-->", libs, 1), encoding="utf-8")
 print("Wrote InvoiceMaker.html")
