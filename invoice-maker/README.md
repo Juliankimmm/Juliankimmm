@@ -12,6 +12,27 @@ A single file, `InvoiceMaker.html`, that turns checked-off menu items into a PDF
 
 **Saved invoices** lists every invoice. **Open** changes one, **Copy** starts a new invoice from it and **PDF** downloads it again.
 
+## Invoice folder (Chrome or Edge)
+Under ⚙ Settings → Invoice folder, click **Choose folder…** once and pick a folder, for example a new **Invoices** folder inside Documents. After that, **⬇ Save PDF to folder** saves each invoice like this:
+
+```
+Invoices/
+  _InvoiceMaker backup.json        ← full backup, updated automatically
+  Sung Man Kim/
+    _Invoice list.csv              ← his details + every invoice with totals (opens in Excel)
+    2026-09-10 Invoice 20260001.pdf
+    2026-10-16 Invoice 20260002.pdf
+  Jane Doe/
+    ...
+```
+
+- Files are named by date, so each customer's folder lists their invoices in order.
+- If you change an invoice's date, number or customer and save again, its PDF is renamed or moved. No old copy is left behind.
+- **Save all saved invoices into the folder** puts invoices you saved before choosing the folder into it.
+- The browser may ask once per visit to allow saving into the folder. Choose **Allow**, or **Allow on every visit** if it offers that.
+- If the folder can't be used (moved, renamed or not allowed), the PDF goes to Downloads instead and a message says why.
+- In Safari or Firefox this option isn't available, and PDFs go to Downloads as before.
+
 ## Saving and backups
 - Everything saves automatically in this browser on this computer: the menu, customers, saved invoices, letterhead, settings and the invoice in progress. You do **not** need to back up every time.
 - **Backup** makes one file with everything in it. Use it to move to another computer or browser, or as a safety copy every few weeks. **Restore** loads that file and replaces what's there.
