@@ -18,12 +18,16 @@ A single file, `InvoiceMaker.html`, that turns checked-off menu items into a PDF
 - Always open the file in the **same browser**.
 
 ## Letterhead
-Go to ⚙ Settings → Letterhead and upload a PNG, JPG or PDF. PNG or JPG works best. For a PDF, the first page is used: drag the sliders so the preview shows just the letterhead. It prints in the same place it sits on the paper.
+By default the firm's letterhead is printed as sharp text, laid out like the printed stationery: the attorney on the left, the NJ office in the middle and the NY office on the right, in small capitals. Every line can be changed under ⚙ Settings → Letterhead. Leave a box empty to leave that part out, and press **Preview** to see the result.
+
+You can also upload a letterhead instead (PNG, JPG or PDF). An uploaded letterhead replaces the typed one until you click **Remove letterhead**.
+- **A wide image of just the letterhead** (like a scan or screenshot of the top of the stationery) prints across the full width. Use the size slider to adjust it.
+- **A whole page (a PDF)** uses its first page. Drag the sliders so the preview shows only the letterhead. It prints in the same place it sits on the paper.
 
 ## Invoice numbers
 Numbers look like `20260001`: the prefix `{YEAR}` plus 4 digits. You can change the format, or set the last number used, under ⚙ Settings → Invoice numbers. If you type a number by hand, the counter continues from it.
 
 ## For developers
-Edit `src/app.html`, then run `python3 build.py` to rebuild `InvoiceMaker.html`. The build inlines jsPDF 2.5.2, jspdf-autotable 3.8.4 and pdf.js 3.11.174 from `vendor/`. pdf.js is stored as text and only runs when a PDF letterhead is uploaded.
+Edit `src/app.html` (and `src/letterhead.js`, which draws the typed letterhead), then run `python3 build.py` to rebuild `InvoiceMaker.html`. The build inlines jsPDF 2.5.2, jspdf-autotable 3.8.4 and pdf.js 3.11.174 from `vendor/`. pdf.js is stored as text and only runs when a PDF letterhead is uploaded.
 
 All data is one object in `localStorage` (`invoiceMaker.v2`): `{ version, settings: { firm, letterhead, serviceMenu, expenseMenu, numbering }, customers[], invoices[], counters: { lastInvoiceNumber }, draft }`. Backup and restore use that same object. Older data (`invoiceMaker.v1` and v1 backup files) is converted automatically.
