@@ -260,7 +260,21 @@
         <p><b>You do not need to back up every time.</b> Everything — your menu, customers, saved invoices, letterhead and the invoice you are working on — saves automatically, in this browser, on this computer.</p>
         <p><b>Backup</b> makes one file containing everything. Use it to move to another computer or browser, or every few weeks as a safety copy. <b>Restore</b> loads that file back. A restore replaces what is here now.</p>
         <p>Keep opening this file in the <b>same browser</b> (e.g. always Chrome). A different browser will not see your saved data.</p>
+        <p>If you use an <b>invoice folder</b> (below), a full backup is also kept in that folder automatically. To get everything back, press <b>Restore</b> and pick <i>_InvoiceMaker backup.json</i> from the folder.</p>
       </div>
+
+      <h3>Invoice folder on this computer</h3>
+      <div id="folderSupported">
+        <p class="hint" style="margin:0 0 10px">Choose a folder once (for example <b>Documents › Invoices</b>). Every invoice PDF is then saved into it, in a folder for each customer, named by date, e.g. <i>Sung Man Kim / 2026-10-16 Invoice 20260001.pdf</i>. Each customer folder also gets an <i>_Invoice list.csv</i> (opens in Excel) with their details and every invoice's totals. A full backup, <i>_InvoiceMaker backup.json</i>, is kept in the main folder and updated automatically.</p>
+        <div class="info" id="folderStatus"></div>
+        <div class="row">
+          <button id="btnChooseFolder" class="primary">Choose folder…</button>
+          <button id="btnSaveAllToFolder" title="Put every saved invoice into the folder (also tidies up files after renaming a customer)">Save all saved invoices into the folder</button>
+          <button id="btnForgetFolder" class="danger" title="Stop saving into the folder. Files already in it are not touched.">Stop using this folder</button>
+        </div>
+        <label class="check" style="margin-top:10px"><input type="checkbox" id="folderAlsoDownload"> Also put a copy of each PDF in Downloads</label>
+      </div>
+      <div id="folderUnsupported" class="info hidden">Saving into a folder works in <b>Google Chrome</b> and <b>Microsoft Edge</b>. In this browser, PDFs go to your Downloads folder instead. Open this file in Chrome or Edge to use an invoice folder.</div>
 
       <h3>Letterhead</h3>
       <div class="two">
@@ -466,7 +480,8 @@
         letterhead: null,
         serviceMenu: menuFrom(DEFAULT_SERVICES),
         expenseMenu: menuFrom(DEFAULT_EXPENSES),
-        numbering: { prefix: '{YEAR}', digits: 4 }
+        numbering: { prefix: '{YEAR}', digits: 4 },
+        folder: { name: '', alsoDownload: false }
       },
       customers: [],
       invoices: [],
@@ -508,6 +523,7 @@
       if (Array.isArray(st.serviceMenu)) s.settings.serviceMenu = st.serviceMenu;
       if (Array.isArray(st.expenseMenu)) s.settings.expenseMenu = st.expenseMenu;
       s.settings.numbering = Object.assign(s.settings.numbering, st.numbering || {});
+      s.settings.folder = Object.assign(s.settings.folder, st.folder || {});
       if (Array.isArray(data.customers)) s.customers = data.customers;
       if (Array.isArray(data.invoices)) s.invoices = data.invoices.map(normalizeInvoice);
       s.counters = Object.assign(s.counters, data.counters || {});
@@ -546,6 +562,7 @@
       localStorage.setItem(STORE_KEY, JSON.stringify(state));
       var d = new Date();
       $('savedIndicator').textContent = '✓ Saved automatically ' + d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+      scheduleFolderBackup();
       return true;
     } catch (e) {
       $('savedIndicator').textContent = '⚠ Not saved';
@@ -962,7 +979,7 @@
     var rec = findSaved(id); if (!rec) return;
     if (!okToLeaveDraft()) return;
     var d = normalizeInvoice(clone(rec));
-    delete d.savedAt; delete d.totals;
+    delete d.savedAt; delete d.totals; delete d.folderPath;
     d.id = uid(); d.invoiceNo = ''; d.invoiceDate = todayISO();
     d.services.forEach(function (l) { l.id = uid(); });
     d.expenses.forEach(function (l) { l.id = uid(); });
@@ -974,10 +991,12 @@
   }
   function deleteSaved(id) {
     var rec = findSaved(id); if (!rec) return;
-    if (!confirm('Delete saved invoice #' + rec.invoiceNo + ' (' + (rec.clientName || 'no name') + ')? This cannot be undone.')) return;
+    if (!confirm('Delete saved invoice #' + rec.invoiceNo + ' (' + (rec.clientName || 'no name') + ')? This cannot be undone.' +
+        (rec.folderPath ? '\n\n(Its PDF in the invoice folder is kept: ' + rec.folderPath + ')' : ''))) return;
     state.invoices = state.invoices.filter(function (i) { return i.id !== id; });
     if (state.draft.id === id) state.draft.dirty = true;
     save(); renderList(); renderEditingNote();
+    refreshCustomerList(customerFolderName(rec));
   }
 
   // ---------- settings: firm ----------
@@ -1173,13 +1192,15 @@
   });
 
   // ---------- backup / restore ----------
-  $('btnBackup').addEventListener('click', function () {
+  function backupBlob() {
     var data = clone(state);
     data.app = 'invoice-maker';
     data.version = DATA_VERSION;
     data.exportedAt = new Date().toISOString();
-    var blob = new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
-    downloadBlob(blob, 'InvoiceMaker_backup_' + todayISO() + '.json');
+    return new Blob([JSON.stringify(data, null, 1)], { type: 'application/json' });
+  }
+  $('btnBackup').addEventListener('click', function () {
+    downloadBlob(backupBlob(), 'InvoiceMaker_backup_' + todayISO() + '.json');
     toast('Backup file saved to your Downloads');
   });
   $('btnRestore').addEventListener('click', function () { $('restoreFile').click(); });
@@ -1207,6 +1228,233 @@
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
+
+  // ---------- invoice folder (Chrome / Edge: File System Access) ----------
+  // The chosen folder's handle is kept in IndexedDB (it cannot go in localStorage); the browser
+  // may ask once per visit for permission, which is requested from the Save button's click.
+  var folderHandle = null;
+  var folderSupported = typeof window.showDirectoryPicker === 'function';
+  var FOLDER_DB = 'invoiceMakerFolder', FOLDER_STORE = 'handles';
+  var BACKUP_NAME = '_InvoiceMaker backup.json', LIST_NAME = '_Invoice list.csv';
+  function folderDb(mode, fn) {
+    return new Promise(function (resolve, reject) {
+      var req;
+      try { req = indexedDB.open(FOLDER_DB, 1); } catch (e) { reject(e); return; }
+      req.onupgradeneeded = function () { req.result.createObjectStore(FOLDER_STORE); };
+      req.onerror = function () { reject(req.error); };
+      req.onsuccess = function () {
+        var db = req.result, tx, r;
+        try { tx = db.transaction(FOLDER_STORE, mode); r = fn(tx.objectStore(FOLDER_STORE)); }
+        catch (e) { db.close(); reject(e); return; }
+        tx.oncomplete = function () { db.close(); resolve(r && r.result); };
+        tx.onerror = tx.onabort = function () { db.close(); reject(tx.error); };
+      };
+    });
+  }
+  function isDirHandle(h) { return !!(h && typeof h.getDirectoryHandle === 'function' && typeof h.getFileHandle === 'function'); }
+  function folderLabel() { return (folderHandle && folderHandle.name) || state.settings.folder.name || 'the invoice folder'; }
+  function folderPermission(ask) {
+    if (!folderHandle) return Promise.resolve(false);
+    var opts = { mode: 'readwrite' };
+    var p = ask && folderHandle.requestPermission ? folderHandle.requestPermission(opts)
+          : folderHandle.queryPermission ? folderHandle.queryPermission(opts) : Promise.resolve('granted');
+    return Promise.resolve(p).then(function (r) { return r === 'granted'; }, function () { return false; });
+  }
+  function folderErrorText(e) {
+    if (e && e.message === 'permission') return 'The browser did not get permission to save into "' + folderLabel() + '".';
+    if (e && e.name === 'NotFoundError') return 'The invoice folder "' + folderLabel() + '" could not be found (it may have been moved or renamed). Choose it again in Settings.';
+    return 'The PDF could not be saved into "' + folderLabel() + '"' + (e && e.message ? ' (' + e.message + ')' : '') + '.';
+  }
+  // Names that are safe on Windows and Mac
+  function safeName(s, fallback) {
+    s = String(s || '').replace(/[<>:"\/\\|?*\u0000-\u001f]/g, ' ').replace(/\s+/g, ' ').trim().replace(/[. ]+$/, '');
+    if (/^(con|prn|aux|nul|com\d|lpt\d)$/i.test(s)) s += '_';
+    return s.slice(0, 90).trim() || fallback;
+  }
+  function customerOf(inv) {
+    return inv.customerId ? state.customers.find(function (c) { return c.id === inv.customerId; }) : null;
+  }
+  function customerFolderName(inv) {
+    var c = customerOf(inv);
+    var name = String((c && c.clientName) || inv.clientName || '').replace(/^(mr|mrs|ms|miss|dr)\.?\s+/i, '');
+    return safeName(name, 'No customer name');
+  }
+  function invoiceFileName(inv) {
+    return safeName((inv.invoiceDate || todayISO()) + ' Invoice ' + (String(inv.invoiceNo || '').trim() || 'no number'), 'Invoice') + '.pdf';
+  }
+  function writeFile(dir, name, data) {
+    return dir.getFileHandle(name, { create: true }).then(function (fh) { return fh.createWritable(); })
+      .then(function (w) { return w.write(data).then(function () { return w.close(); }, function (e) { if (w.abort) w.abort(); throw e; }); });
+  }
+  function removeFile(dirName, name) {
+    return folderHandle.getDirectoryHandle(dirName).then(function (dir) { return dir.removeEntry(name); }).catch(function () {});
+  }
+  // Save one invoice's PDF as <customer>/<date> Invoice <number>.pdf; returns that path.
+  function writeInvoicePdf(rec, blob) {
+    var dirName = customerFolderName(rec), base = invoiceFileName(rec), name = base, n = 2;
+    var taken = function (path) { return state.invoices.some(function (i) { return i.id !== rec.id && i.folderPath === path; }); };
+    while (taken(dirName + '/' + name)) name = base.replace(/\.pdf$/, ' (' + (n++) + ').pdf');
+    var path = dirName + '/' + name, old = rec.folderPath;
+    return folderHandle.getDirectoryHandle(dirName, { create: true })
+      .then(function (dir) { return writeFile(dir, name, blob); })
+      .then(function () {
+        // the invoice moved (new date, number or customer name): remove the old copy
+        if (old && old !== path) {
+          var cut = old.lastIndexOf('/');
+          return removeFile(old.slice(0, cut), old.slice(cut + 1)).then(function () { return old.slice(0, cut); });
+        }
+      })
+      .then(function (oldDir) {
+        rec.folderPath = path;
+        if (state.draft.id === rec.id) state.draft.folderPath = path;
+        return { path: path, oldDir: oldDir && oldDir !== dirName ? oldDir : null };
+      });
+  }
+  function csvCell(v) {
+    if (typeof v === 'number') return String(round2(v));
+    v = String(v === undefined || v === null ? '' : v);
+    if (/^[=+@\t\r]/.test(v)) v = "'" + v;   // keep Excel from treating text as a formula
+    return /[",\n\r]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+  }
+  function customerListCsv(dirName, list) {
+    var latest = list[list.length - 1], c = customerOf(latest) || latest;
+    var rows = [
+      ['Customer', c.clientName || latest.clientName || ''],
+      ['Address', String(c.address || '').replace(/\s*\n\s*/g, ', ')],
+      ['Contact', c.contact || ''],
+      ['Matter', c.matter || ''],
+      ['In reference to', c.reference || ''],
+      ['List updated', new Date().toLocaleString()],
+      [],
+      ['Invoice #', 'Invoice date', 'Services from', 'Services through', 'Matter', 'Hours', 'Labor', 'Expenses', 'Invoice total',
+       'Previous balance', 'Payment', 'Reduction', 'Amount due', 'PDF file']
+    ];
+    var sum = { hours: 0, labor: 0, expenses: 0, total: 0, payment: 0, reduction: 0 };
+    list.forEach(function (inv) {
+      var t = calc(inv);
+      ['hours', 'labor', 'expenses', 'total', 'payment', 'reduction'].forEach(function (k) { sum[k] += t[k]; });
+      rows.push([inv.invoiceNo || '', usDate(inv.invoiceDate, true), usDate(inv.fromDate, true), usDate(inv.toDate, true), inv.matter || '',
+        t.hours, t.labor, t.expenses, t.total, t.prev, t.payment, t.reduction, t.due,
+        inv.folderPath ? inv.folderPath.slice(inv.folderPath.lastIndexOf('/') + 1) : '(not in this folder yet)']);
+    });
+    rows.push(['Totals', '', '', '', '', sum.hours, sum.labor, sum.expenses, sum.total, '', sum.payment, sum.reduction, '', '']);
+    return '﻿' + rows.map(function (r) { return r.map(csvCell).join(','); }).join('\r\n') + '\r\n';
+  }
+  // Rewrite <customer>/_Invoice list.csv (or remove it, and the folder if empty, when no invoices are left).
+  function writeCustomerList(dirName) {
+    var list = state.invoices.filter(function (i) { return customerFolderName(i) === dirName; })
+      .sort(function (a, b) { return (a.invoiceDate || '').localeCompare(b.invoiceDate || '') || String(a.invoiceNo).localeCompare(String(b.invoiceNo)); });
+    if (!list.length) {
+      return removeFile(dirName, LIST_NAME).then(function () { return folderHandle.removeEntry(dirName); }).catch(function () {});
+    }
+    return folderHandle.getDirectoryHandle(dirName, { create: true })
+      .then(function (dir) { return writeFile(dir, LIST_NAME, new Blob([customerListCsv(dirName, list)], { type: 'text/csv' })); });
+  }
+  function writeFolderBackup() { return writeFile(folderHandle, BACKUP_NAME, backupBlob()); }
+  function saveInvoiceToFolder(rec, blob) {
+    return writeInvoicePdf(rec, blob).then(function (r) {
+      save();
+      return writeCustomerList(customerFolderName(rec))
+        .then(function () { if (r.oldDir) return writeCustomerList(r.oldDir); })
+        .then(writeFolderBackup)
+        .then(function () { return r.path; });
+    });
+  }
+  // Keep the customer list right after a delete, without asking for permission.
+  function refreshCustomerList(dirName) {
+    if (!folderHandle) return;
+    folderPermission(false).then(function (ok) { if (ok) return writeCustomerList(dirName).then(writeFolderBackup); }).catch(function () {});
+  }
+  var folderBackupTimer;
+  function scheduleFolderBackup() {
+    if (!folderHandle) return;
+    clearTimeout(folderBackupTimer);
+    folderBackupTimer = setTimeout(function () {
+      folderPermission(false).then(function (ok) { if (ok) return writeFolderBackup(); }).catch(function (e) { console.warn('Folder backup failed', e); });
+    }, 4000);
+  }
+  function renderFolder() {
+    $('folderSupported').classList.toggle('hidden', !folderSupported);
+    $('folderUnsupported').classList.toggle('hidden', folderSupported);
+    $('folderAlsoDownload').checked = !!state.settings.folder.alsoDownload;
+    var box = $('folderStatus');
+    box.innerHTML = '';
+    if (folderHandle) {
+      box.appendChild(el('p', {}, [document.createTextNode('Saving invoices into: '), el('b', { text: folderHandle.name })]));
+      folderPermission(false).then(function (ok) {
+        if (!ok) box.appendChild(el('p', { text: 'The browser will ask once to allow saving into this folder the next time you save a PDF. Choose "Allow" (or "Allow on every visit").' }));
+      });
+    } else if (state.settings.folder.name) {
+      box.appendChild(el('p', { text: 'The folder "' + state.settings.folder.name + '" is not connected in this browser. Press "Choose folder…" and pick it again.' }));
+    } else {
+      box.appendChild(el('p', { text: 'No folder chosen yet. PDFs go to your Downloads folder.' }));
+    }
+    $('btnSaveAllToFolder').disabled = !folderHandle;
+    $('btnForgetFolder').disabled = !folderHandle;
+    $('btnPdf').textContent = folderHandle ? '⬇ Save PDF to folder' : '⬇ Download PDF';
+    $('btnPdf').title = folderHandle ? 'Saves into ' + folderHandle.name + ' / <customer> and keeps the invoice in Saved invoices' : 'Downloads the PDF and keeps the invoice in Saved invoices';
+  }
+  function loadFolderHandle() {
+    if (!folderSupported) { renderFolder(); return Promise.resolve(); }
+    return folderDb('readonly', function (st) { return st.get('folder'); })
+      .then(function (h) { folderHandle = isDirHandle(h) ? h : null; }, function () { folderHandle = null; })
+      .then(renderFolder);
+  }
+  $('btnChooseFolder').addEventListener('click', function () {
+    window.showDirectoryPicker({ id: 'invoice-maker', mode: 'readwrite', startIn: 'documents' }).then(function (h) {
+      folderHandle = h;
+      state.settings.folder.name = h.name; save();
+      return folderDb('readwrite', function (st) { return st.put(h, 'folder'); }).catch(function (e) { console.warn('Could not remember the folder', e); });
+    }).then(function () {
+      renderFolder();
+      toast('Invoices will be saved into ' + folderHandle.name);
+      var waiting = state.invoices.filter(function (i) { return !i.folderPath; }).length;
+      if (waiting && confirm('Put the ' + waiting + ' invoice(s) you already saved into this folder too?')) saveAllToFolder();
+      else writeFolderBackup().catch(function () {});
+    }).catch(function (e) {
+      if (e && e.name === 'AbortError') return;   // the person closed the picker
+      console.error(e);
+      alert('That folder could not be used' + (e && e.message ? ': ' + e.message : '.') + '\n\nTip: pick a folder inside Documents (not the whole Documents or Desktop folder).');
+    });
+  });
+  function saveAllToFolder() {
+    var list = state.invoices.slice().sort(function (a, b) { return (a.invoiceDate || '').localeCompare(b.invoiceDate || ''); });
+    var dirs = {}, done = 0, btn = $('btnSaveAllToFolder');
+    btn.disabled = true;
+    return folderPermission(true).then(function (ok) {
+      if (!ok) throw new Error('permission');
+      return list.reduce(function (p, rec) {
+        return p.then(function () {
+          btn.textContent = 'Saving ' + (done + 1) + ' of ' + list.length + '…';
+          return writeInvoicePdf(rec, buildPdf(rec).output('blob')).then(function (r) {
+            dirs[customerFolderName(rec)] = 1; if (r.oldDir) dirs[r.oldDir] = 1; done++;
+          });
+        });
+      }, Promise.resolve());
+    }).then(function () {
+      save();
+      return Object.keys(dirs).reduce(function (p, d) { return p.then(function () { return writeCustomerList(d); }); }, Promise.resolve());
+    }).then(writeFolderBackup).then(function () {
+      toast(done + ' invoice' + (done === 1 ? '' : 's') + ' saved into ' + folderLabel());
+    }).catch(function (e) {
+      console.error(e); save();
+      alert(folderErrorText(e) + (done ? '\n\n' + done + ' of ' + list.length + ' invoices were saved before this happened.' : ''));
+    }).then(function () {
+      btn.textContent = 'Save all saved invoices into the folder'; renderFolder(); renderList();
+    });
+  }
+  $('btnSaveAllToFolder').addEventListener('click', function () {
+    if (!state.invoices.length) { alert('There are no saved invoices yet.'); return; }
+    saveAllToFolder();
+  });
+  $('btnForgetFolder').addEventListener('click', function () {
+    if (!confirm('Stop saving into "' + folderLabel() + '"? The files already in it are kept. PDFs will go to Downloads again.')) return;
+    folderHandle = null;
+    state.settings.folder.name = ''; save();
+    folderDb('readwrite', function (st) { return st.delete('folder'); }).catch(function () {});
+    renderFolder();
+  });
+  $('folderAlsoDownload').addEventListener('change', function () { state.settings.folder.alsoDownload = $('folderAlsoDownload').checked; save(); });
 
   // ---------- PDF ----------
   // drawTypedLetterhead(doc, firm, W, M) is inserted here from src/letterhead.js by build.py
@@ -1410,7 +1658,24 @@
   $('btnPdf').addEventListener('click', function () {
     if (!draftReady()) return;
     if (!saveInvoice(true)) return;   // every downloaded invoice is kept in "Saved invoices"
-    if (downloadPdf(state.draft)) toast('Downloaded ' + fileName(state.draft) + ' and saved invoice #' + state.draft.invoiceNo);
+    if (!folderHandle) {
+      if (downloadPdf(state.draft)) toast('Downloaded ' + fileName(state.draft) + ' and saved invoice #' + state.draft.invoiceNo);
+      return;
+    }
+    var rec = findSaved(state.draft.id), doc;
+    try { doc = buildPdf(rec); } catch (e) { console.error(e); alert('Something went wrong making the PDF: ' + e.message); return; }
+    // Asking for folder permission must happen right away, while the click still counts as the user's action.
+    folderPermission(true).then(function (ok) {
+      if (!ok) throw new Error('permission');
+      return saveInvoiceToFolder(rec, doc.output('blob'));
+    }).then(function (path) {
+      if (state.settings.folder.alsoDownload) doc.save(fileName(rec));
+      toast('Saved invoice #' + rec.invoiceNo + ' to ' + folderLabel() + ' / ' + path);
+    }).catch(function (e) {
+      console.error(e);
+      doc.save(fileName(rec));
+      alert(folderErrorText(e) + '\n\nThe PDF was put in your Downloads folder instead.');
+    });
   });
   $('btnPreview').addEventListener('click', function () {
     if (!draftReady()) return;
@@ -1425,7 +1690,7 @@
     renderLines('svc'); renderLines('exp'); renderTotals(); renderList(); fillNumbering();
   }
   function renderAll() {
-    fillFirm(); renderLetterhead();
+    fillFirm(); renderLetterhead(); renderFolder();
     renderMenu('svc'); renderMenu('exp');
     renderDraft();
   }
@@ -1435,10 +1700,11 @@
   $('svcDate').value = todayISO();
   $('expDate').value = todayISO();
   renderAll();
+  loadFolderHandle();
   window.addEventListener('storage', function (e) {
     if (e.key === STORE_KEY) { load(); renderAll(); toast('Updated from another open window'); }
   });
-  window.__invoiceMaker = { state: function () { return state; }, buildPdf: buildPdf, calc: calc };
+  window.__invoiceMaker = { state: function () { return state; }, buildPdf: buildPdf, calc: calc, reloadFolder: loadFolderHandle };
 })();
 </script>
 </body>
