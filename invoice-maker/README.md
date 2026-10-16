@@ -18,6 +18,7 @@ Under ⚙ Settings → Invoice folder, click **Choose folder…** once and pick 
 ```
 Invoices/
   _InvoiceMaker backup.json        ← full backup, updated automatically
+  _Older backups/                  ← earlier backups, kept when something was removed
   Sung Man Kim/
     _Invoice list.csv              ← his details + every invoice with totals (opens in Excel)
     2026-09-10 Invoice 20260001.pdf
@@ -28,8 +29,11 @@ Invoices/
 
 - Files are named by date, so each customer's folder lists their invoices in order.
 - If you change an invoice's date, number or customer and save again, its PDF is renamed or moved. No old copy is left behind.
+- Two different saved customers with the same name get separate folders, e.g. "John Kim" and "John Kim (2)".
 - **Save all saved invoices into the folder** puts invoices you saved before choosing the folder into it.
-- The browser may ask once per visit to allow saving into the folder. Choose **Allow**, or **Allow on every visit** if it offers that.
+- After the browser restarts, it asks once to allow saving into the folder. That happens at the first **Save PDF to folder**, or click **📁 Allow invoice folder** at the top. Choose **Allow**, or **Allow on every visit** if it's offered.
+- **New computer, or browser data cleared?** Choose the same folder again. If it holds a backup with invoices that aren't in the browser, you'll be asked whether to load it.
+- When the backup in the folder is about to be replaced and it has invoices or customers that aren't in the browser (for example, after you delete an invoice), it's kept first in `_Older backups`.
 - If the folder can't be used (moved, renamed or not allowed), the PDF goes to Downloads instead and a message says why.
 - In Safari or Firefox this option isn't available, and PDFs go to Downloads as before.
 
