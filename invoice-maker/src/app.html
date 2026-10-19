@@ -169,7 +169,7 @@
           <tbody></tbody>
           <tfoot><tr><td colspan="3">Subtotal</td><td class="num" id="svcHours"></td><td></td><td class="num" id="svcTotal"></td><td></td></tr></tfoot>
         </table>
-        <div class="row"><button id="btnBlankSvc">+ Add blank line</button></div>
+        <div class="row"><button id="btnBlankSvc">+ Add blank line</button><button id="btnClearSvc" class="danger" title="Remove every service line from this invoice (your menu is not changed)">🗑 Delete all services</button></div>
       </div>
     </div>
   </section>
@@ -196,7 +196,7 @@
           <tbody></tbody>
           <tfoot><tr><td colspan="2">Expense total</td><td class="num" id="expTotal"></td><td></td></tr></tfoot>
         </table>
-        <div class="row"><button id="btnBlankExp">+ Add blank line</button></div>
+        <div class="row"><button id="btnBlankExp">+ Add blank line</button><button id="btnClearExp" class="danger" title="Remove every expense line from this invoice (your menu is not changed)">🗑 Delete all expenses</button></div>
       </div>
     </div>
   </section>
@@ -394,23 +394,29 @@
   };
 
   var DEFAULT_SERVICES = [
-    ['Meeting with Client', 1.0],
-    ['TC with Client', 0.3],
-    ['TC with Client and text messages', 0.5],
-    ['Text messages with Client', 0.1],
-    ['Emails with Client', 0.2],
-    ["TC with Court's clerk", 0.3],
-    ['Reviewed the docket report', 0.5],
-    ['Emailed opposing counsel', 0.2],
-    ['Prepared and efiled a letter', 0.4],
-    ['Reviewed opposition and researched cases', 1.0],
-    ['Prepared and efiled Reply brief', 3.0],
-    ['Prepared Certification of Client', 1.0],
-    ['Preparation of Oral Argument; Oral Argument', 1.0],
-    ['Travel Time', 1.0],
-    ['Printed FedEx label; drafted a letter to Chambers for courtesy copy; dropped off at FedEx', 0.5],
-    ['Overnighted courtesy copy with a cover letter', 0.5]
+    ['Corresponded with opposing counsel by email', 0.2],
+    ['Drafted and e-filed Answer', 2.0],
+    ['Exchanged emails with client', 0.2],
+    ['Exchanged text messages with client', 0.1],
+    ['Met with client', 1.0],
+    ['Prepared for and appeared at oral argument', 1.0],
+    ['Researched case law', 1.0],
+    ['Reviewed complaint and calculated answer deadline', 0.5],
+    ['Reviewed docket report', 0.5],
+    ['Reviewed opposition papers and researched case law', 1.0],
+    ['Sent courtesy copy with cover letter by overnight delivery', 0.5],
+    ['Telephone conference and text messages with client', 0.5],
+    ['Telephone conference with client', 0.3],
+    ["Telephone conference with creditor's specialist", 0.3],
+    ['Travel to and from court', 1.0]
   ];
+  var MENU_VERSION = 2;
+  // Built-in service items of the first releases; ones still unchanged are replaced by the list above.
+  var OLD_DEFAULT_SERVICES = ['Meeting with Client', 'TC with Client', 'TC with Client and text messages', 'Text messages with Client',
+    'Emails with Client', "TC with Court's clerk", 'Reviewed the docket report', 'Emailed opposing counsel', 'Prepared and efiled a letter',
+    'Reviewed opposition and researched cases', 'Prepared and efiled Reply brief', 'Prepared Certification of Client',
+    'Preparation of Oral Argument; Oral Argument', 'Travel Time',
+    'Printed FedEx label; drafted a letter to Chambers for courtesy copy; dropped off at FedEx', 'Overnighted courtesy copy with a cover letter'];
   var DEFAULT_EXPENSES = [
     ['Motion fee', 50],
     ['Answer filing fee', 175],
@@ -480,6 +486,7 @@
         firm: Object.assign({}, DEFAULT_FIRM),
         letterhead: null,
         serviceMenu: menuFrom(DEFAULT_SERVICES),
+        menuVersion: MENU_VERSION,
         expenseMenu: menuFrom(DEFAULT_EXPENSES),
         numbering: { prefix: '{YEAR}', digits: 4 },
         folder: { name: '', alsoDownload: false }
@@ -506,6 +513,21 @@
     return Object.assign({}, DEFAULT_FIRM, f);
   }
 
+  // Swap the old built-in service items for the new ones. Items the user added or renamed stay (after the new list);
+  // a new item the user already has (same words) keeps the user's hours.
+  function upgradeServiceMenu(list, version) {
+    if (version >= MENU_VERSION) return list;
+    var key = function (t) { return String(t || '').trim().toLowerCase(); };
+    var old = {}; OLD_DEFAULT_SERVICES.forEach(function (t) { old[key(t)] = 1; });
+    var mine = list.filter(function (i) { return i && !old[key(i.text)]; });
+    var out = DEFAULT_SERVICES.map(function (d) {
+      var have = mine.find(function (i) { return key(i.text) === key(d[0]); });
+      return have || { id: uid(), text: d[0], qty: d[1] };
+    });
+    mine.forEach(function (i) { if (out.indexOf(i) < 0) out.push(i); });
+    return out;
+  }
+
   function normalizeInvoice(inv) {
     var out = Object.assign(freshInvoice(), inv || {});
     out.reduction = Object.assign(freshInvoice().reduction, (inv && inv.reduction) || {});
@@ -521,7 +543,7 @@
       var st = data.settings;
       s.settings.firm = upgradeFirm(st.firm);
       s.settings.letterhead = st.letterhead || null;
-      if (Array.isArray(st.serviceMenu)) s.settings.serviceMenu = st.serviceMenu;
+      if (Array.isArray(st.serviceMenu)) s.settings.serviceMenu = upgradeServiceMenu(st.serviceMenu, st.menuVersion || 1);
       if (Array.isArray(st.expenseMenu)) s.settings.expenseMenu = st.expenseMenu;
       s.settings.numbering = Object.assign(s.settings.numbering, st.numbering || {});
       s.settings.folder = Object.assign(s.settings.folder, st.folder || {});
@@ -534,7 +556,7 @@
     // version 1 (first release)
     s.settings.firm = upgradeFirm(data.firm);
     if (data.firm && data.firm.reductionNote) s.settings.firm.reductionNote = data.firm.reductionNote.replace(/^\*Voluntary Reduction:/, '*{name}:');
-    if (Array.isArray(data.serviceMenu)) s.settings.serviceMenu = data.serviceMenu;
+    if (Array.isArray(data.serviceMenu)) s.settings.serviceMenu = upgradeServiceMenu(data.serviceMenu, 1);
     if (Array.isArray(data.expenseMenu)) s.settings.expenseMenu = data.expenseMenu;
     if (Array.isArray(data.clients)) s.customers = data.clients.map(function (c) {
       return { id: c.id || uid(), clientName: c.clientName || '', address: '', contact: '', matter: c.matter || '', reference: c.reference || '' };
@@ -775,6 +797,18 @@
     touch(); renderLines('exp');
     var rows = $('expTable').tBodies[0].rows; rows[rows.length - 1].querySelector('textarea').focus();
   });
+
+  function clearLines(kind) {
+    var lines = kind === 'svc' ? state.draft.services : state.draft.expenses;
+    if (!lines.length) return;
+    var what = kind === 'svc' ? 'service' : 'expense';
+    if (!confirm('Delete all ' + lines.length + ' ' + what + ' line' + (lines.length === 1 ? '' : 's') + ' from this invoice?\n\n(Your menu stays the same.)')) return;
+    lines.length = 0;
+    touch(); renderLines(kind); renderTotals();
+    toast('All ' + what + ' lines deleted');
+  }
+  $('btnClearSvc').addEventListener('click', function () { clearLines('svc'); });
+  $('btnClearExp').addEventListener('click', function () { clearLines('exp'); });
 
   // ---------- invoice lines ----------
   function svcAmount(l) { return l.nc ? 0 : round2(num(l.hours) * num(l.rate)); }
@@ -1741,10 +1775,10 @@
     doc.autoTable({
       body: tRows, startY: y, theme: 'plain', tableWidth: 280,
       margin: { left: W - M - 280, right: M, bottom: 54, top: 54 },
-      styles: { font: FONT, fontSize: 10.5, cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }, textColor: 20 },
+      styles: { font: FONT, fontSize: 9.5, cellPadding: { top: 2, bottom: 2, left: 2, right: 2 }, textColor: 20 },
       columnStyles: { 0: { halign: 'right', cellWidth: 190 }, 1: { halign: 'right', cellWidth: 90 } },
       didParseCell: function (d) {
-        if (d.row.index === last) { d.cell.styles.fontStyle = 'bold'; d.cell.styles.fontSize = 11.5; d.cell.styles.cellPadding = { top: 6, bottom: 2, left: 2, right: 2 }; }
+        if (d.row.index === last) { d.cell.styles.fontStyle = 'bold'; d.cell.styles.cellPadding = { top: 6, bottom: 2, left: 2, right: 2 }; }
       },
       didDrawCell: function (d) {
         if (d.row.index === last && d.column.index === 1) {
@@ -1756,7 +1790,7 @@
 
     // notes
     var notes = [];
-    if (firm.payable) notes.push({ text: firm.payable, style: 'bold', size: 10.5 });
+    if (firm.payable) notes.push({ text: firm.payable, style: 'bold', size: 9.5, center: true });
     if (inv.showIncrement && firm.incrementNote) notes.push({ text: firm.incrementNote, style: 'normal', size: 9 });
     if (printNote) {
       notes.push({ style: 'normal', size: 9, text: firm.reductionNote
@@ -1769,7 +1803,8 @@
       String(n.text).split('\n').forEach(function (para) {
         doc.splitTextToSize(para, W - 2 * M).forEach(function (line) {
           if (y > H - 60) { doc.addPage(); y = 54; }
-          doc.text(line, M, y); y += n.size + 2.5;
+          if (n.center) doc.text(line, W / 2, y, { align: 'center' }); else doc.text(line, M, y);
+          y += n.size + 2.5;
         });
       });
       y += 6;
