@@ -5,7 +5,7 @@ A single file, `InvoiceMaker.html`, that turns checked-off menu items into a PDF
 ## How to use
 1. Double-click `InvoiceMaker.html`. It opens in Chrome, Edge or Safari.
 2. **Step 1 – Customer:** pick a saved customer, or type a new one and click **★ Save as new customer**. The invoice # is filled in automatically.
-3. **Step 2 – Services:** pick the date of the work, check the services, then click **Add checked**. Repeat for each date. Click ✎ on a menu item to rename it. The new name is kept for next time. **🗑 Delete all services** clears the lines, for example when starting an invoice for a different client.
+3. **Step 2 – Services:** pick the date of the work, check the services, then click **Add checked**. Repeat for each date. Lines are kept in date order automatically, even if you add them out of order or change a date. Click ✎ on a menu item to rename it. The new name is kept for next time. **🗑 Delete all services** clears the lines. If the invoice was already saved, it asks first whether you're starting a new invoice (the saved one is kept) or clearing that invoice itself. To start fresh, you can also use **+ New invoice**.
 4. **Step 3 – Expenses:** add expenses the same way.
 5. **Step 4 – Totals:** enter the previous balance and any payment received. You can also add a reduction (hours, a dollar amount or a percent of labor).
 6. Click **⬇ Download PDF**. The PDF saves to Downloads, and the invoice is added to **Saved invoices**.

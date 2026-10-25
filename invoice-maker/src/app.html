@@ -51,6 +51,8 @@
   table.lines { width: 100%; border-collapse: collapse; }
   table.lines th { text-align: left; font-size: 13px; color: var(--muted); font-weight: 600; padding: 6px 4px; border-bottom: 2px solid var(--line); }
   table.lines td { padding: 4px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  @keyframes lineFlash { from { background: #fff1b8; } to { background: transparent; } }
+  table.lines tr.flash td { animation: lineFlash 2.2s ease-out; }
   table.lines td.num, table.lines th.num { text-align: right; }
   table.lines input, table.lines textarea { padding: 6px 7px; }
   table.lines .amt { padding-top: 10px; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -148,7 +150,7 @@
   <!-- STEP 2: Services -->
   <section class="card">
     <h2><span class="step">2</span> Services (labor)</h2>
-    <p class="hint">Pick the date, check the work you did, then press <b>Add checked</b>. To rename a menu item, click its <b>✎</b> — the new name is saved for next time.</p>
+    <p class="hint">Pick the date, check the work you did, then press <b>Add checked</b>. Lines are kept in date order automatically. To rename a menu item, click its <b>✎</b> — the new name is saved for next time.</p>
     <div class="stack">
       <div>
         <label class="f" style="max-width:220px">Date of work <input id="svcDate" type="date"></label>
@@ -349,6 +351,13 @@
   <button id="btnPdf" class="primary big">⬇ Download PDF</button>
 </div>
 
+<dialog id="choiceDialog">
+  <form method="dialog">
+    <p id="choiceText" style="margin-top:0;white-space:pre-line"></p>
+    <div class="row" id="choiceButtons" style="justify-content:flex-end"></div>
+  </form>
+</dialog>
+
 <dialog id="itemDialog">
   <form method="dialog" id="itemForm">
     <h3 id="itemDialogTitle" style="margin-top:0">Menu item</h3>
@@ -411,12 +420,26 @@
     ['Travel to and from court', 1.0]
   ];
   var MENU_VERSION = 2;
-  // Built-in service items of the first releases; ones still unchanged are replaced by the list above.
-  var OLD_DEFAULT_SERVICES = ['Meeting with Client', 'TC with Client', 'TC with Client and text messages', 'Text messages with Client',
-    'Emails with Client', "TC with Court's clerk", 'Reviewed the docket report', 'Emailed opposing counsel', 'Prepared and efiled a letter',
-    'Reviewed opposition and researched cases', 'Prepared and efiled Reply brief', 'Prepared Certification of Client',
-    'Preparation of Oral Argument; Oral Argument', 'Travel Time',
-    'Printed FedEx label; drafted a letter to Chambers for courtesy copy; dropped off at FedEx', 'Overnighted courtesy copy with a cover letter'];
+  // Built-in service items of the first releases (with their usual hours) and the new item that replaces each, if any.
+  // Old items the user never changed are swapped for the new list; changed hours carry over to the new wording.
+  var OLD_DEFAULT_SERVICES = [
+    ['Meeting with Client', 1.0, 'Met with client'],
+    ['TC with Client', 0.3, 'Telephone conference with client'],
+    ['TC with Client and text messages', 0.5, 'Telephone conference and text messages with client'],
+    ['Text messages with Client', 0.1, 'Exchanged text messages with client'],
+    ['Emails with Client', 0.2, 'Exchanged emails with client'],
+    ["TC with Court's clerk", 0.3, ''],
+    ['Reviewed the docket report', 0.5, 'Reviewed docket report'],
+    ['Emailed opposing counsel', 0.2, 'Corresponded with opposing counsel by email'],
+    ['Prepared and efiled a letter', 0.4, ''],
+    ['Reviewed opposition and researched cases', 1.0, 'Reviewed opposition papers and researched case law'],
+    ['Prepared and efiled Reply brief', 3.0, ''],
+    ['Prepared Certification of Client', 1.0, ''],
+    ['Preparation of Oral Argument; Oral Argument', 1.0, 'Prepared for and appeared at oral argument'],
+    ['Travel Time', 1.0, 'Travel to and from court'],
+    ['Printed FedEx label; drafted a letter to Chambers for courtesy copy; dropped off at FedEx', 0.5, ''],
+    ['Overnighted courtesy copy with a cover letter', 0.5, 'Sent courtesy copy with cover letter by overnight delivery']
+  ];
   var DEFAULT_EXPENSES = [
     ['Motion fee', 50],
     ['Answer filing fee', 175],
@@ -513,16 +536,27 @@
     return Object.assign({}, DEFAULT_FIRM, f);
   }
 
-  // Swap the old built-in service items for the new ones. Items the user added or renamed stay (after the new list);
-  // a new item the user already has (same words) keeps the user's hours.
-  function upgradeServiceMenu(list, version) {
-    if (version >= MENU_VERSION) return list;
+  // Swap the old built-in service items for the new ones. Runs only while the menu still has an old built-in
+  // item (so an older copy of this file opened later cannot undo the user's own changes). Items the user added
+  // or renamed stay (after the new list); hours the user changed carry over; a new item the user already typed
+  // keeps the user's hours.
+  function upgradeServiceMenu(list) {
     var key = function (t) { return String(t || '').trim().toLowerCase(); };
-    var old = {}; OLD_DEFAULT_SERVICES.forEach(function (t) { old[key(t)] = 1; });
-    var mine = list.filter(function (i) { return i && !old[key(i.text)]; });
+    var old = {}; OLD_DEFAULT_SERVICES.forEach(function (o) { old[key(o[0])] = o; });
+    if (!list.some(function (i) { return i && old[key(i.text)]; })) return list;
+    var mine = [], hours = {};
+    list.forEach(function (i) {
+      if (!i) return;
+      var o = old[key(i.text)];
+      if (!o) { mine.push(i); return; }
+      if (num(i.qty) !== o[1]) {   // the user changed this item's hours
+        if (o[2]) hours[key(o[2])] = i.qty; else mine.push(i);
+      }
+    });
     var out = DEFAULT_SERVICES.map(function (d) {
       var have = mine.find(function (i) { return key(i.text) === key(d[0]); });
-      return have || { id: uid(), text: d[0], qty: d[1] };
+      if (have) return have;
+      return { id: uid(), text: d[0], qty: key(d[0]) in hours ? hours[key(d[0])] : d[1] };
     });
     mine.forEach(function (i) { if (out.indexOf(i) < 0) out.push(i); });
     return out;
@@ -543,7 +577,7 @@
       var st = data.settings;
       s.settings.firm = upgradeFirm(st.firm);
       s.settings.letterhead = st.letterhead || null;
-      if (Array.isArray(st.serviceMenu)) s.settings.serviceMenu = upgradeServiceMenu(st.serviceMenu, st.menuVersion || 1);
+      if (Array.isArray(st.serviceMenu)) s.settings.serviceMenu = upgradeServiceMenu(st.serviceMenu);
       if (Array.isArray(st.expenseMenu)) s.settings.expenseMenu = st.expenseMenu;
       s.settings.numbering = Object.assign(s.settings.numbering, st.numbering || {});
       s.settings.folder = Object.assign(s.settings.folder, st.folder || {});
@@ -556,7 +590,7 @@
     // version 1 (first release)
     s.settings.firm = upgradeFirm(data.firm);
     if (data.firm && data.firm.reductionNote) s.settings.firm.reductionNote = data.firm.reductionNote.replace(/^\*Voluntary Reduction:/, '*{name}:');
-    if (Array.isArray(data.serviceMenu)) s.settings.serviceMenu = upgradeServiceMenu(data.serviceMenu, 1);
+    if (Array.isArray(data.serviceMenu)) s.settings.serviceMenu = upgradeServiceMenu(data.serviceMenu);
     if (Array.isArray(data.expenseMenu)) s.settings.expenseMenu = data.expenseMenu;
     if (Array.isArray(data.clients)) s.customers = data.clients.map(function (c) {
       return { id: c.id || uid(), clientName: c.clientName || '', address: '', contact: '', matter: c.matter || '', reference: c.reference || '' };
@@ -772,14 +806,16 @@
     var date = $(kind + 'Date').value;
     var boxes = $(kind + 'Menu').querySelectorAll('input[type=checkbox]:checked');
     if (!boxes.length) { alert('Check at least one item in the menu first.'); return; }
+    var added = {};
     boxes.forEach(function (cb) {
       var item = list.find(function (x) { return x.id === cb.value; });
       if (!item) return;
-      if (kind === 'svc') state.draft.services.push(newSvcLine(date, item.text, item.qty));
-      else state.draft.expenses.push({ id: uid(), date: date, text: item.text, amount: item.qty });
+      var line = kind === 'svc' ? newSvcLine(date, item.text, item.qty) : { id: uid(), date: date, text: item.text, amount: item.qty };
+      (kind === 'svc' ? state.draft.services : state.draft.expenses).push(line);
+      added[line.id] = 1;
       cb.checked = false;
     });
-    touch(); renderLines(kind); renderTotals();
+    touch(); renderLines(kind, added); renderTotals();
     toast(boxes.length + ' line' + (boxes.length > 1 ? 's' : '') + ' added');
   }
   function newSvcLine(date, text, hours) {
@@ -788,24 +824,64 @@
   $('btnAddSvc').addEventListener('click', function () { addChecked('svc'); });
   $('btnAddExp').addEventListener('click', function () { addChecked('exp'); });
   $('btnBlankSvc').addEventListener('click', function () {
-    state.draft.services.push(newSvcLine($('svcDate').value, '', ''));
-    touch(); renderLines('svc');
-    var rows = $('svcTable').tBodies[0].rows; rows[rows.length - 1].querySelector('textarea').focus();
+    var line = newSvcLine($('svcDate').value, '', '');
+    state.draft.services.push(line);
+    touch(); renderLines('svc', { [line.id]: 1 });
+    focusLine('svc', line.id, 'text');
   });
   $('btnBlankExp').addEventListener('click', function () {
-    state.draft.expenses.push({ id: uid(), date: $('expDate').value, text: '', amount: '' });
-    touch(); renderLines('exp');
-    var rows = $('expTable').tBodies[0].rows; rows[rows.length - 1].querySelector('textarea').focus();
+    var line = { id: uid(), date: $('expDate').value, text: '', amount: '' };
+    state.draft.expenses.push(line);
+    touch(); renderLines('exp', { [line.id]: 1 });
+    focusLine('exp', line.id, 'text');
   });
 
+  // A question box with several answers; cb gets the chosen value ('' if closed).
+  function choose(text, options, cb) {
+    var dlg = $('choiceDialog'), row = $('choiceButtons');
+    $('choiceText').textContent = text;
+    row.innerHTML = '';
+    options.forEach(function (o) { row.appendChild(el('button', { value: o.value, className: o.cls || '', text: o.label })); });
+    dlg.returnValue = '';
+    dlg.onclose = function () { dlg.onclose = null; cb(dlg.returnValue); };
+    dlg.showModal();
+  }
   function clearLines(kind) {
     var lines = kind === 'svc' ? state.draft.services : state.draft.expenses;
     if (!lines.length) return;
     var what = kind === 'svc' ? 'service' : 'expense';
-    if (!confirm('Delete all ' + lines.length + ' ' + what + ' line' + (lines.length === 1 ? '' : 's') + ' from this invoice?\n\n(Your menu stays the same.)')) return;
-    lines.length = 0;
-    touch(); renderLines(kind); renderTotals();
-    toast('All ' + what + ' lines deleted');
+    var saved = findSaved(state.draft.id);
+    var doClear = function () {
+      lines.length = 0;
+      touch(); renderLines(kind); renderTotals();
+      toast('All ' + what + ' lines deleted');
+    };
+    if (!saved) {
+      if (confirm('Delete all ' + lines.length + ' ' + what + ' line' + (lines.length === 1 ? '' : 's') + ' from this invoice?\n\n(Your menu stays the same.)')) doClear();
+      return;
+    }
+    // This invoice is already saved: emptying it and saving again would replace it.
+    choose('Invoice #' + saved.invoiceNo + ' (' + (saved.clientName || 'no name') + ') is already saved.\n\n' +
+      'Are you starting an invoice for the next client, or removing the ' + what + ' lines from invoice #' + saved.invoiceNo + ' itself?', [
+      { value: 'new', label: 'Start a new invoice (keep #' + saved.invoiceNo + ')', cls: 'primary' },
+      { value: 'clear', label: 'Remove them from #' + saved.invoiceNo },
+      { value: 'cancel', label: 'Cancel' }
+    ], function (v) {
+      if (v === 'clear') doClear();
+      else if (v === 'new') startNewFromCurrent(kind, saved);
+    });
+  }
+  // New invoice that keeps the customer details now on screen (and the other kind of lines); the saved one stays as it was.
+  function startNewFromCurrent(kind, saved) {
+    var cur = state.draft, d = freshInvoice();
+    ['customerId', 'clientName', 'address', 'contact', 'matter', 'reference'].forEach(function (k) { d[k] = cur[k]; });
+    var other = kind === 'svc' ? 'expenses' : 'services';
+    d[other] = cur[other].map(function (l) { var c = clone(l); c.id = uid(); return c; });
+    d.invoiceNo = nextInvoiceNumber();
+    d.dirty = true;
+    state.draft = d;
+    save(); renderDraft(); window.scrollTo(0, 0);
+    toast('New invoice #' + d.invoiceNo + ' started. Invoice #' + saved.invoiceNo + ' is still in Saved invoices.');
   }
   $('btnClearSvc').addEventListener('click', function () { clearLines('svc'); });
   $('btnClearExp').addEventListener('click', function () { clearLines('exp'); });
@@ -815,8 +891,23 @@
   function sortByDate(a, b) { return (a.date || '9999').localeCompare(b.date || '9999'); }
   function autoGrow(t) { t.style.height = 'auto'; t.style.height = (t.scrollHeight + 2) + 'px'; }
 
-  function renderLines(kind) {
+  // Lines are kept in date order (lines with the same date keep the order they were added in; no date goes last).
+  function sortLines(lines) {
+    var sorted = lines.map(function (l, i) { return { l: l, i: i }; })
+      .sort(function (a, b) { return sortByDate(a.l, b.l) || a.i - b.i; })
+      .map(function (x) { return x.l; });
+    var moved = sorted.some(function (l, i) { return l !== lines[i]; });
+    if (moved) { lines.length = 0; Array.prototype.push.apply(lines, sorted); }
+    return moved;
+  }
+  function focusLine(kind, id, field) {
+    var row = $(kind + 'Table').querySelector('tr[data-line="' + id + '"]');
+    var f = row && row.querySelector('[data-field="' + field + '"]');
+    if (f) f.focus();
+  }
+  function renderLines(kind, flash) {
     var lines = kind === 'svc' ? state.draft.services : state.draft.expenses;
+    sortLines(lines);
     var tbody = $(kind + 'Table').tBodies[0];
     tbody.innerHTML = '';
     if (!lines.length) {
@@ -824,7 +915,7 @@
     }
     lines.forEach(function (l) {
       function inp(field, attrs) {
-        var a = Object.assign({ value: l[field] === undefined ? '' : l[field] }, attrs || {});
+        var a = Object.assign({ value: l[field] === undefined ? '' : l[field], 'data-field': field }, attrs || {});
         var tag = a.tag === 'textarea' ? 'textarea' : 'input'; delete a.tag;
         a.oninput = function (e) { l[field] = e.target.value; touch(); refreshRow(); renderTotals(); if (tag === 'textarea') autoGrow(e.target); };
         return el(tag, a);
@@ -841,11 +932,22 @@
         editItem(kind, null, l.text, kind === 'svc' ? l.hours : l.amount);
       } });
       var desc = inp('text', { tag: 'textarea', rows: 1, placeholder: 'Description' });
+      // After a date is changed, move the line to its place once the date box is left.
+      var dateInput = inp('date', { type: 'date', onblur: function (e) {
+        var next = e.relatedTarget, nextRow = next && next.closest ? next.closest('tr[data-line]') : null;
+        var nextField = next && next.getAttribute ? next.getAttribute('data-field') : null;
+        // going to a button or checkbox in the list: re-sorting now would swallow that click (it re-sorts later anyway)
+        if (nextRow && !nextField && $(kind + 'Table').contains(nextRow)) return;
+        if (!sortLines(lines)) return;
+        renderLines(kind, { [l.id]: 1 });
+        if (nextRow && nextField) focusLine(kind, nextRow.getAttribute('data-line'), nextField);
+      } });
+      var rowAttrs = { 'data-line': l.id, className: flash && flash[l.id] ? 'flash' : '' };
       var tr;
       if (kind === 'svc') {
         var ncBox = el('input', { type: 'checkbox', checked: !!l.nc, onchange: function (e) { l.nc = e.target.checked; touch(); refreshRow(); renderTotals(); } });
-        tr = el('tr', {}, [
-          el('td', {}, [inp('date', { type: 'date' })]),
+        tr = el('tr', rowAttrs, [
+          el('td', {}, [dateInput]),
           el('td', {}, [inp('by')]),
           el('td', {}, [desc]),
           el('td', {}, [inp('hours', { type: 'number', step: '0.1', min: '0', style: 'text-align:right' })]),
@@ -855,8 +957,8 @@
           el('td', { style: 'white-space:nowrap' }, [star, remove])
         ]);
       } else {
-        tr = el('tr', {}, [
-          el('td', {}, [inp('date', { type: 'date' })]),
+        tr = el('tr', rowAttrs, [
+          el('td', {}, [dateInput]),
           el('td', {}, [desc]),
           el('td', {}, [inp('amount', { type: 'number', step: '0.01', style: 'text-align:right' })]),
           el('td', { style: 'white-space:nowrap' }, [star, remove])
