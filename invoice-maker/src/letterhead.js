@@ -30,8 +30,9 @@
  *     below CAP is set at the largest overall scale that ends above it.
  */
 function drawTypedLetterhead(doc, f, W, M) {
+  // top = cap top of the first line: 12 pt lower than on the stationery scan (47.65), for a larger top margin
   var P = /*P*/{
-    top: 47.65, xL: 43.6117, rAxis: 118.8317, cxOff: -2.44, sc: 0.78, hs: 1.132,
+    top: 59.65, xL: 43.6117, rAxis: 118.8317, cxOff: -2.44, sc: 0.78, hs: 1.132,
     sHead: 11.2, trHead: 0.09,
     sName: 17.7, trName: 0.1042,
     sBody: 10.45, trBody: 0, hsBody: 1.222, wsBody: 0.077, wsRight: -0.015,

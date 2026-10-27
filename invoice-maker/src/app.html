@@ -1763,8 +1763,8 @@
       } else {
         var iw = (W - 2 * M) * (lh.size || 1), bh = iw * lh.imgH / lh.imgW;
         if (bh > 170) { bh = 170; iw = bh * lh.imgW / lh.imgH; }
-        doc.addImage(lh.img, imgFormat(lh.img), (W - iw) / 2, 36, iw, bh);
-        y = 36 + bh + 26;
+        doc.addImage(lh.img, imgFormat(lh.img), (W - iw) / 2, 48, iw, bh);
+        y = 48 + bh + 26;
       }
     } else {
       y = Math.max(drawTypedLetterhead(doc, firm, W, M), 40) + 26;
@@ -1774,9 +1774,9 @@
     var topY = y;
     doc.setFont(FONT, 'normal'); doc.setFontSize(10.5);
     doc.text('Invoice submitted to:', M, y); y += 15;
-    doc.setFont(FONT, 'bold'); doc.setFontSize(12);
+    doc.setFont(FONT, 'bold'); doc.setFontSize(11);
     var leftW = 270;
-    doc.splitTextToSize(inv.clientName || '', leftW).forEach(function (t) { doc.text(t, M + 6, y); y += 14; });
+    doc.splitTextToSize(inv.clientName || '', leftW).forEach(function (t) { doc.text(t, M + 6, y); y += 13; });
     doc.setFont(FONT, 'normal'); doc.setFontSize(10.5);
     String(inv.address || '').split('\n').forEach(function (a) {
       doc.splitTextToSize(a.trim(), leftW).forEach(function (t) { if (t) { doc.text(t, M + 6, y); y += 13; } });
@@ -1788,21 +1788,26 @@
     var leftEnd = y;
 
     var rx = W - M, ry = topY;
-    doc.setFont(FONT, 'bold'); doc.setFontSize(15);
-    doc.text('Invoice' + (inv.invoiceNo ? ' # ' + inv.invoiceNo : ''), rx, ry + 2, { align: 'right' });
-    ry += 12;
+    doc.setFont(FONT, 'bold'); doc.setFontSize(11);   // same size as the client name
+    doc.text('Invoice' + (inv.invoiceNo ? ' # ' + inv.invoiceNo : ''), rx, ry, { align: 'right' });
+    ry += 9;
     var boxRows = [['Invoice Date:', usDate(inv.invoiceDate, true)]];
     if (firm.terms) boxRows.push(['Terms:', firm.terms]);
     var through = inv.fromDate && inv.toDate ? usDate(inv.fromDate, true) + ' – ' + usDate(inv.toDate, true)
                 : usDate(inv.toDate || inv.fromDate, true);
     if (through) boxRows.push([inv.fromDate && inv.toDate ? 'For Services:' : 'Services Through:', through]);
-    var bw = 200, bh2 = boxRows.length * 13 + 10, bx = rx - bw;
-    doc.setLineWidth(0.6); doc.rect(bx, ry, bw, bh2);
+    // The box fits its text, with the same space on the left and right (and above and below).
     doc.setFont(FONT, 'normal'); doc.setFontSize(10);
+    var PAD = 9, GAP = 6, LEAD = 13, CAPH = 6.6, DESC = 0.5;   // dates and labels have (almost) no descenders
+    var labelW = 0, valueW = 0;
+    boxRows.forEach(function (r) { labelW = Math.max(labelW, doc.getTextWidth(r[0])); valueW = Math.max(valueW, doc.getTextWidth(r[1])); });
+    var bw = PAD + labelW + GAP + valueW + PAD, bx = rx - bw;
+    var firstBase = ry + PAD * 0.75 + CAPH, bh2 = (firstBase - ry) + (boxRows.length - 1) * LEAD + DESC + PAD * 0.75;
+    doc.setLineWidth(0.6); doc.rect(bx, ry, bw, bh2);
     boxRows.forEach(function (r, i) {
-      var ly = ry + 15 + i * 13;
-      doc.text(r[0], bx + 92, ly, { align: 'right' });
-      doc.text(r[1], bx + 98, ly);
+      var ly = firstBase + i * LEAD;
+      doc.text(r[0], bx + PAD + labelW, ly, { align: 'right' });
+      doc.text(r[1], bx + PAD + labelW + GAP, ly);
     });
     y = Math.max(leftEnd, ry + bh2) + 16;
 
