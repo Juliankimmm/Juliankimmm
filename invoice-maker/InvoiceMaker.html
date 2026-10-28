@@ -327,6 +327,12 @@
         <div class="f">Next invoice number will be <b id="numNext" style="font-size:18px;color:var(--ink)"></b></div>
       </div>
 
+      <h3>Page margins</h3>
+      <div class="grid">
+        <label class="f">Left margin (inches) <input id="leftMargin" type="number" step="0.05" min="0.25" max="1.25"></label>
+        <div class="f">Right margin (inches) <b id="rightMargin" style="font-size:18px;color:var(--ink)"></b><span class="hint" style="margin:0">Changes with the left margin, so the printed area keeps the same width.</span></div>
+      </div>
+
       <h3>Billing defaults &amp; notes</h3>
       <div class="grid">
         <label class="f">Default rate ($/hr) <input data-firm="rate" type="number" step="0.01"></label>
@@ -973,7 +979,8 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
         menuVersion: MENU_VERSION,
         expenseMenu: menuFrom(DEFAULT_EXPENSES),
         numbering: { prefix: '{YEAR}', digits: 4 },
-        folder: { name: '', alsoDownload: false }
+        folder: { name: '', alsoDownload: false },
+        layout: { left: 45 }   // left page margin in pt (the right margin is 108 - left)
       },
       customers: [],
       invoices: [],
@@ -1042,6 +1049,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
       if (Array.isArray(st.expenseMenu)) s.settings.expenseMenu = st.expenseMenu;
       s.settings.numbering = Object.assign(s.settings.numbering, st.numbering || {});
       s.settings.folder = Object.assign(s.settings.folder, st.folder || {});
+      s.settings.layout = Object.assign(s.settings.layout, st.layout || {});
       if (Array.isArray(data.customers)) s.customers = data.customers;
       if (Array.isArray(data.invoices)) s.invoices = data.invoices.map(normalizeInvoice);
       s.counters = Object.assign(s.counters, data.counters || {});
@@ -1617,6 +1625,24 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
   });
 
   // ---------- settings: numbering ----------
+  // ---------- settings: page margins ----------
+  var MARGIN_SUM = 108;   // left + right page margin in pt (1.5 in)
+  function leftMarginPt() {
+    var l = num(state.settings.layout && state.settings.layout.left);
+    return Math.min(90, Math.max(18, l || 45));
+  }
+  function fillMargins() {
+    $('leftMargin').value = (leftMarginPt() / 72).toFixed(2);
+    $('rightMargin').textContent = ((MARGIN_SUM - leftMarginPt()) / 72).toFixed(2);
+  }
+  $('leftMargin').addEventListener('input', function () {
+    var v = parseFloat($('leftMargin').value);
+    if (!isFinite(v) || v < 0.25 || v > 1.25) return;
+    state.settings.layout.left = Math.round(v * 72 * 10) / 10; save();
+    $('rightMargin').textContent = ((MARGIN_SUM - leftMarginPt()) / 72).toFixed(2);
+  });
+  $('leftMargin').addEventListener('change', fillMargins);
+
   function fillNumbering() {
     $('numPrefix').value = state.settings.numbering.prefix;
     $('numDigits').value = String(state.settings.numbering.digits);
@@ -2713,6 +2739,12 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     var doc = new window.jspdf.jsPDF({ unit: 'pt', format: 'letter' });
     var W = doc.internal.pageSize.getWidth(), H = doc.internal.pageSize.getHeight();
     var M = 54, FONT = 'times';
+    // Everything is laid out with equal 54 pt margins, then the whole page is moved sideways so the
+    // left margin is the one chosen in Settings (the right margin grows or shrinks by the same amount).
+    var shift = leftMarginPt() - M;
+    var shiftPage = function () { if (shift) doc.internal.write('1 0 0 1 ' + shift.toFixed(2) + ' 0 cm'); };
+    shiftPage();
+    doc.internal.events.subscribe('addPage', shiftPage);
     var y = 54;
 
     // letterhead
@@ -2953,7 +2985,7 @@ function(t){t.__bidiEngine__=t.prototype.__bidiEngine__=function(t){var r,n,i,a,
     renderLines('svc'); renderLines('exp'); renderTotals(); renderList(); fillNumbering();
   }
   function renderAll() {
-    fillFirm(); renderLetterhead(); renderFolder();
+    fillFirm(); fillMargins(); renderLetterhead(); renderFolder();
     renderMenu('svc'); renderMenu('exp');
     renderDraft();
   }

@@ -49,6 +49,9 @@ You can also upload a letterhead instead (PNG, JPG or PDF). An uploaded letterhe
 - **A wide image of just the letterhead** (like a scan or screenshot of the top of the stationery) prints across the full width. Use the size slider to adjust it.
 - **A whole page (a PDF)** uses its first page. Drag the sliders so the preview shows only the letterhead. It prints in the same place it sits on the paper.
 
+## Page margins
+The printed page has a 0.63 in left margin and a 0.88 in right margin. To change them, go to ⚙ Settings → Page margins and type a new left margin. The right margin adjusts automatically so the printed area keeps the same width. Everything moves together: letterhead, table, totals and page numbers.
+
 ## Invoice numbers
 Numbers look like `20260001`: the prefix `{YEAR}` plus 4 digits. You can change the format, or set the last number used, under ⚙ Settings → Invoice numbers. If you type a number by hand, the counter continues from it.
 
