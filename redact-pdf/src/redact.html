@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PDF Redactor</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --card: #fff; --ink: #1d2330; --muted: #667085; --line: #d8dce3;
+    --accent: #1f4e8c; --danger: #b42318; --ok: #067647; --soft: #eef3fb; --warn-bg: #fff6e0; --warn: #8a5a00;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header.top { background: #111827; color: #fff; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; position: sticky; top: 0; z-index: 10; }
+  header.top h1 { margin: 0; font-size: 21px; }
+  header.top .sub { font-size: 13px; opacity: .8; }
+  main { max-width: 1400px; margin: 0 auto; padding: 18px 16px 60px; display: grid; gap: 18px; grid-template-columns: 380px 1fr; align-items: start; }
+  @media (max-width: 960px) { main { grid-template-columns: 1fr; } }
+  aside { position: sticky; top: 70px; display: grid; gap: 14px; max-height: calc(100vh - 86px); overflow: auto; padding-bottom: 8px; }
+  @media (max-width: 960px) { aside { position: static; max-height: none; } }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; }
+  .card h2 { margin: 0 0 10px; font-size: 17px; display: flex; gap: 8px; align-items: center; }
+  .step { display: inline-flex; width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: #fff; align-items: center; justify-content: center; font-size: 13px; flex: none; }
+  .hint { color: var(--muted); font-size: 13.5px; margin: 0 0 10px; }
+  textarea, input[type=text], select { font: inherit; color: var(--ink); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: #fff; width: 100%; }
+  textarea { min-height: 130px; resize: vertical; font-size: 15px; }
+  textarea:focus, input:focus, select:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+  button { font: inherit; cursor: pointer; border-radius: 6px; border: 1px solid var(--line); background: #fff; color: var(--ink); padding: 8px 14px; }
+  button:hover { background: var(--soft); }
+  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+  button.primary:hover { filter: brightness(1.1); }
+  button.big { font-size: 17px; padding: 11px 18px; font-weight: 600; width: 100%; }
+  button:disabled { opacity: .5; cursor: default; }
+  .check { display: flex; align-items: center; gap: 8px; font-size: 15px; margin: 6px 0; cursor: pointer; }
+  .check input { width: 18px; height: 18px; flex: none; }
+  .drop { border: 2px dashed #b9c3d3; border-radius: 10px; padding: 22px 14px; text-align: center; background: #fafbfd; cursor: pointer; }
+  .drop.over { border-color: var(--accent); background: var(--soft); }
+  .drop b { color: var(--accent); }
+  .fileinfo { margin-top: 10px; font-size: 14px; word-break: break-all; }
+  .found { list-style: none; margin: 10px 0 0; padding: 0; font-size: 14px; }
+  .found li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+  .found li .n { font-weight: 600; white-space: nowrap; }
+  .found li.zero .n { color: var(--danger); }
+  .found li .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .warn { background: var(--warn-bg); color: var(--warn); border: 1px solid #f0d58a; border-radius: 8px; padding: 9px 12px; font-size: 14px; margin-top: 10px; }
+  .okbox { background: #e9f8ef; color: var(--ok); border: 1px solid #a6e1bd; border-radius: 8px; padding: 9px 12px; font-size: 14px; margin-top: 10px; }
+  .info { background: var(--soft); border: 1px solid #c9d8f0; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; }
+  .info p { margin: 0 0 6px; } .info p:last-child { margin: 0; }
+  .hidden { display: none !important; }
+  .progress { height: 8px; background: #e5e9f0; border-radius: 4px; overflow: hidden; margin-top: 10px; }
+  .progress > div { height: 100%; width: 0; background: var(--accent); transition: width .15s; }
+  .toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; font-size: 14px; color: var(--muted); }
+  .toolbar .legend { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 2px; vertical-align: middle; }
+  #pages { display: grid; gap: 18px; }
+  .empty { color: var(--muted); text-align: center; padding: 60px 20px; font-style: italic; background: var(--card); border: 1px dashed var(--line); border-radius: 10px; }
+  .pagewrap { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 10px; }
+  .pagehead { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-bottom: 6px; gap: 10px; flex-wrap: wrap; }
+  .pagehead .scan { color: var(--warn); font-weight: 600; }
+  .page { position: relative; margin: 0 auto; background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,.15); user-select: none; touch-action: pan-y; }
+  .page canvas { display: block; width: 100%; height: 100%; }
+  .overlay { position: absolute; inset: 0; cursor: crosshair; }
+  .box { position: absolute; background: #000; }
+  .box.auto { cursor: pointer; }
+  .box.manual { cursor: pointer; background: #000; outline: 1px solid #000; }
+  .box.kept { background: transparent; outline: 2px dashed #e0a100; }
+  .box.drawing { background: rgba(0,0,0,.45); outline: 1px dashed #000; }
+  body.peek .box.auto:not(.kept), body.peek .box.manual { background: rgba(0,0,0,.28); outline: 2px solid #d92d20; }
+  .box:hover { outline: 2px solid #d92d20; }
+  .toast { position: fixed; top: 64px; left: 50%; transform: translateX(-50%); background: var(--ok); color: #fff; padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .25s; pointer-events: none; z-index: 20; max-width: 90vw; }
+  .toast.show { opacity: 1; }
+  label.f { display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div>
+    <h1>⬛ PDF Redactor</h1>
+    <div class="sub">Everything happens on this computer. The PDF is never uploaded anywhere.</div>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <section class="card">
+      <h2><span class="step">1</span> Open a PDF</h2>
+      <div class="drop" id="drop" tabindex="0">Drop a PDF here, or <b>click to choose one</b></div>
+      <input type="file" id="file" accept="application/pdf,.pdf" hidden>
+      <div class="fileinfo" id="fileinfo"></div>
+      <div class="progress hidden" id="loadProgress"><div></div></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">2</span> What to black out</h2>
+      <p class="hint">Type one item per line: names, addresses, account numbers, any words. Matches are blacked out on the right as you type.</p>
+      <textarea id="terms" placeholder="John Smith&#10;123 Main Street&#10;987-65-4321" spellcheck="false" autocomplete="off"></textarea>
+      <label class="check"><input type="checkbox" id="caseSensitive"> Case-sensitive (“Kim” won’t match “KIM” or “kim”)</label>
+      <label class="check"><input type="checkbox" id="wholeWords"> Whole words only (“Kim” won’t match “Kimberly”)</label>
+      <div style="margin-top:8px;font-size:14px;color:var(--muted)">Also find automatically:</div>
+      <label class="check"><input type="checkbox" id="findSSN"> Social Security numbers (123-45-6789)</label>
+      <label class="check"><input type="checkbox" id="findEmail"> Email addresses</label>
+      <label class="check"><input type="checkbox" id="findPhone"> Phone numbers</label>
+      <ul class="found" id="found"></ul>
+      <div class="warn hidden" id="scanWarn"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">3</span> Check, then save</h2>
+      <p class="hint">On the pages: <b>drag</b> to black out anything else (signatures, pictures, scanned text). <b>Click</b> a black box to keep that one spot visible; click it again to black it out again. Click a box you drew to remove it.</p>
+      <label class="check"><input type="checkbox" id="peek"> See through the boxes (only on this screen, to check them)</label>
+      <label class="f" style="margin-top:10px">File name
+        <input type="text" id="outName" placeholder="(open a PDF first)">
+      </label>
+      <div class="warn hidden" id="nameWarn"></div>
+      <label class="f" style="margin-top:10px">Quality
+        <select id="quality">
+          <option value="150" selected>Standard — recommended, small file (150 dpi)</option>
+          <option value="200">Sharper — bigger file (200 dpi)</option>
+          <option value="300">Very sharp — for tiny print, large file (300 dpi)</option>
+        </select>
+      </label>
+      <div style="margin-top:12px"><button class="primary big" id="btnSave" disabled>⬇ Save redacted PDF</button></div>
+      <div class="progress hidden" id="saveProgress"><div></div></div>
+      <div class="okbox hidden" id="savedBox"></div>
+    </section>
+
+    <section class="card info">
+      <p><b>Why the result can’t be undone:</b> many tools only lay a black box over the words, and the words can still be copied out from underneath. This tool rebuilds every page as a flat picture with the black boxes burned in. The saved PDF has no text, fonts, form fields, comments, bookmarks or hidden data left in it, so there is nothing to recover. After saving, the tool reopens the new file and checks this.</p>
+      <p>Because the pages become pictures, text in the saved file can’t be selected or searched. Keep the original in a safe place.</p>
+      <p>The tool only finds typed text. Words that are part of a scanned image must be covered by dragging a box over them.</p>
+    </section>
+  </aside>
+
+  <section>
+    <div class="toolbar">
+      <span class="legend"><span class="swatch" style="background:#000"></span> blacked out</span>
+      <span class="legend"><span class="swatch" style="outline:2px dashed #e0a100"></span> kept visible (clicked)</span>
+      <span id="summary"></span>
+    </div>
+    <div id="pages"><div class="empty">Open a PDF to see its pages here.</div></div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<!--LIBS-->
+
+<script>
+(function () {
+  'use strict';
+  var pdfjsLib = window.pdfjsLib;
+
+  // ---------- helpers ----------
+  function $(id) { return document.getElementById(id); }
+  function el(tag, attrs, kids) {
+    var e = document.createElement(tag);
+    if (attrs) for (var k in attrs) {
+      if (k === 'text') e.textContent = attrs[k];
+      else if (k.slice(0, 2) === 'on') e.addEventListener(k.slice(2), attrs[k]);
+      else if (k in e) e[k] = attrs[k];
+      else e.setAttribute(k, attrs[k]);
+    }
+    (kids || []).forEach(function (c) { if (c) e.appendChild(c); });
+    return e;
+  }
+  function toast(msg) {
+    var t = $('toast'); t.textContent = msg; t.classList.add('show');
+    clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('show'); }, 2800);
+  }
+  function escapeRe(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+  function nextFrame() { return new Promise(function (r) { requestAnimationFrame(function () { setTimeout(r, 0); }); }); }
+
+  // ---------- state ----------
+  var pdf = null;          // pdf.js document
+  var srcName = '';        // name of the opened file
+  var saves = 0;           // how many times this file was saved in this session
+  var pages = [];          // per page: { num, page, vp1, text, map, items, styles, annots, auto: [], manual: [], hasText, el }
+  var kept = {};           // keys of automatic boxes the user chose to keep visible
+  var loadToken = 0;
+
+  // ---------- opening a file ----------
+  var drop = $('drop');
+  drop.addEventListener('click', function () { $('file').click(); });
+  drop.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); $('file').click(); } });
+  $('file').addEventListener('change', function () { if ($('file').files[0]) openFile($('file').files[0]); $('file').value = ''; });
+  ['dragenter', 'dragover'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function (t) { drop.addEventListener(t, function (e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function (e) { var f = e.dataTransfer.files[0]; if (f) openFile(f); });
+  // Dropping a file anywhere else should not make the browser open it
+  window.addEventListener('dragover', function (e) { e.preventDefault(); });
+  window.addEventListener('drop', function (e) { e.preventDefault(); if (e.target !== drop && e.dataTransfer.files[0]) openFile(e.dataTransfer.files[0]); });
+
+  function setProgress(id, frac) {
+    var p = $(id); p.classList.toggle('hidden', frac === null);
+    if (frac !== null) p.firstElementChild.style.width = Math.round(frac * 100) + '%';
+  }
+
+  function openFile(file) {
+    if (!/\.pdf$/i.test(file.name) && file.type !== 'application/pdf') { alert('Please choose a PDF file.'); return; }
+    var token = ++loadToken;
+    var reader = new FileReader();
+    reader.onload = function () {
+      var task = pdfjsLib.getDocument({ data: new Uint8Array(reader.result), isEvalSupported: false });
+      task.onPassword = function (update, reason) {
+        var pw = prompt(reason === pdfjsLib.PasswordResponses.INCORRECT_PASSWORD ? 'That password is not right. Try again:' : 'This PDF is password-protected. Enter its password:');
+        if (pw === null) { task.destroy(); return; }
+        update(pw);
+      };
+      $('fileinfo').textContent = 'Opening ' + file.name + '…';
+      task.promise.then(function (doc) {
+        if (token !== loadToken) return;
+        return loadDocument(doc, file.name, token);
+      }).catch(function (e) {
+        if (token !== loadToken) return;
+        console.error(e);
+        setProgress('loadProgress', null);
+        $('fileinfo').textContent = '';
+        if (e && e.name === 'PasswordException') return;
+        alert('This file could not be opened as a PDF' + (e && e.message ? ' (' + e.message + ')' : '') + '.');
+      });
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function loadDocument(doc, name, token) {
+    if (pdf) pdf.destroy();
+    pdf = doc; srcName = name; saves = 0; pages = []; kept = {};
+    $('savedBox').classList.add('hidden');
+    $('pages').innerHTML = '';
+    setProgress('loadProgress', 0);
+    var n = doc.numPages, i = 0;
+    function next() {
+      if (token !== loadToken) return;
+      if (++i > n) {
+        setProgress('loadProgress', null);
+        $('fileinfo').textContent = name + ' — ' + n + ' page' + (n === 1 ? '' : 's');
+        $('btnSave').disabled = false;
+        updateOutName();
+        recompute();
+        return;
+      }
+      return doc.getPage(i).then(function (page) {
+        return Promise.all([page.getTextContent(), page.getAnnotations().catch(function () { return []; })]).then(function (r) {
+          var p = { num: i, page: page, vp1: page.getViewport({ scale: 1 }), auto: [], manual: [], annots: r[1] };
+          buildText(p, r[0]);
+          pages.push(p);
+          buildPageView(p);
+          setProgress('loadProgress', i / n);
+          return nextFrame().then(next);
+        });
+      });
+    }
+    return next();
+  }
+
+  // ---------- page text with a map back to each character's text item ----------
+  function buildText(p, tc) {
+    var text = '', map = [], items = [], prev = null;
+    tc.items.forEach(function (it) {
+      if (typeof it.str !== 'string') return;          // marked-content markers
+      var k = items.push(it) - 1;
+      if (prev && text && text[text.length - 1] !== ' ' && it.str && !/^\s/.test(it.str) && needsSpace(prev, it)) {
+        text += ' '; map.push(null);
+      }
+      for (var i = 0; i < it.str.length; i++) {
+        var c = it.str[i];
+        if (/\s/.test(c)) {
+          if (text[text.length - 1] === ' ') continue;
+          c = ' ';
+        }
+        text += c; map.push([k, i]);
+      }
+      if (it.hasEOL && text[text.length - 1] !== ' ') { text += ' '; map.push(null); }
+      if (it.str) prev = it;
+    });
+    p.text = text; p.map = map; p.items = items; p.styles = tc.styles || {};
+    p.hasText = /\S/.test(text);
+  }
+  function dirOf(it) {
+    var a = it.transform[0], b = it.transform[1], h = Math.hypot(a, b) || 1;
+    return [a / h, b / h];
+  }
+  // Is there a visible gap (or a new line) between two text pieces?
+  function needsSpace(prev, it) {
+    if (prev.hasEOL) return true;
+    var d = dirOf(prev), size = Math.hypot(prev.transform[2], prev.transform[3]) || prev.height || 10;
+    var ex = prev.transform[4] + d[0] * prev.width, ey = prev.transform[5] + d[1] * prev.width;
+    var dx = it.transform[4] - ex, dy = it.transform[5] - ey;
+    var along = dx * d[0] + dy * d[1], across = -dx * d[1] + dy * d[0];
+    return Math.abs(across) > size * 0.5 || along > size * 0.15 || along < -size * 0.5;
+  }
+
+  // ---------- turning matches into boxes (in PDF page units) ----------
+  var measureCtx = document.createElement('canvas').getContext('2d');
+  var measureCache = {};
+  function textWidth(s, family) {
+    var key = family + '\u0000' + s;
+    if (key in measureCache) return measureCache[key];
+    measureCtx.font = '100px ' + (family || 'sans-serif');
+    return (measureCache[key] = measureCtx.measureText(s).width);
+  }
+  // Box around characters i0..i1 of a text item: four corners in PDF units (a little larger than the letters).
+  function itemBox(p, it, i0, i1) {
+    var t = it.transform, d = dirOf(it);
+    var size = Math.hypot(t[2], t[3]) || Math.hypot(t[0], t[1]) || it.height || 10;
+    var fam = (p.styles[it.fontName] && p.styles[it.fontName].fontFamily) || 'sans-serif';
+    var full = textWidth(it.str, fam);
+    var x0 = full ? it.width * textWidth(it.str.slice(0, i0), fam) / full : 0;
+    var x1 = full ? it.width * textWidth(it.str.slice(0, i1), fam) / full : it.width;
+    var pad = size * 0.12;
+    x0 -= pad; x1 += pad;
+    var asc = size * 0.95, desc = size * 0.32;
+    var ox = t[4], oy = t[5], ux = d[0], uy = d[1], nx = -uy, ny = ux;
+    return [
+      [ox + ux * x0 + nx * asc, oy + uy * x0 + ny * asc], [ox + ux * x1 + nx * asc, oy + uy * x1 + ny * asc],
+      [ox + ux * x1 - nx * desc, oy + uy * x1 - ny * desc], [ox + ux * x0 - nx * desc, oy + uy * x0 - ny * desc]
+    ];
+  }
+  function rectBox(r) { return [[r[0], r[1]], [r[2], r[1]], [r[2], r[3]], [r[0], r[3]]]; }
+  // Corners in PDF units -> rectangle {x, y, w, h} in a viewport's pixels
+  function toView(vp, pts) {
+    var xs = [], ys = [];
+    pts.forEach(function (pt) { var q = vp.convertToViewportPoint(pt[0], pt[1]); xs.push(q[0]); ys.push(q[1]); });
+    var x0 = Math.min.apply(null, xs), y0 = Math.min.apply(null, ys);
+    return { x: x0, y: y0, w: Math.max.apply(null, xs) - x0, h: Math.max.apply(null, ys) - y0 };
+  }
+  function boxKey(p, pts) { return p.num + ':' + pts.map(function (q) { return q[0].toFixed(1) + ',' + q[1].toFixed(1); }).join(' '); }
+
+  // ---------- what to look for ----------
+  function patterns() {
+    var cs = $('caseSensitive').checked, whole = $('wholeWords').checked;
+    var flags = 'gu' + (cs ? '' : 'i');
+    var list = [], seen = {};
+    $('terms').value.split(/\r?\n/).forEach(function (raw) {
+      var term = raw.trim().replace(/\s+/g, ' ');
+      if (!term) return;
+      var key = cs ? term : term.toLowerCase();
+      if (seen[key]) return; seen[key] = 1;
+      // spaces in a term match any spacing (also a line break) on the page
+      var src = term.split(' ').map(escapeRe).join('\\s*');
+      if (whole) src = '(?<![\\p{L}\\p{N}])' + src + '(?![\\p{L}\\p{N}])';
+      list.push({ label: term, re: new RegExp(src, flags) });
+    });
+    if ($('findSSN').checked) list.push({ label: 'Social Security numbers', re: /(?<!\d)\d{3}[- ]\d{2}[- ]\d{4}(?!\d)/g });
+    if ($('findEmail').checked) list.push({ label: 'Email addresses', re: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g });
+    if ($('findPhone').checked) list.push({ label: 'Phone numbers', re: /(?<!\d)(?:\+?1[\s.-]?)?(?:\(\d{3}\)\s?|\d{3}[\s.-])\d{3}[\s.-]\d{4}(?!\d)/g });
+    return list;
+  }
+
+  // ---------- find everything, update the page overlays and counts ----------
+  var recomputeTimer;
+  function scheduleRecompute() { clearTimeout(recomputeTimer); recomputeTimer = setTimeout(recompute, 150); }
+  function recompute() {
+    var pats = patterns(), counts = pats.map(function () { return 0; });
+    var noText = [];
+    pages.forEach(function (p) {
+      p.auto = [];
+      if (!p.hasText) noText.push(p.num);
+      pats.forEach(function (pat, pi) {
+        pat.re.lastIndex = 0;
+        var m;
+        while ((m = pat.re.exec(p.text))) {
+          if (!m[0].length) { pat.re.lastIndex++; continue; }
+          counts[pi]++;
+          // group the matched characters by text piece -> one box per piece
+          var byItem = {};
+          for (var c = m.index; c < m.index + m[0].length; c++) {
+            var at = p.map[c];
+            if (!at) continue;
+            var g = byItem[at[0]] || (byItem[at[0]] = [at[1], at[1]]);
+            g[0] = Math.min(g[0], at[1]); g[1] = Math.max(g[1], at[1]);
+          }
+          Object.keys(byItem).forEach(function (k) {
+            var it = p.items[k], g = byItem[k];
+            var pts = itemBox(p, it, g[0], g[1] + 1);
+            p.auto.push({ pts: pts, key: boxKey(p, pts), label: pat.label });
+          });
+        }
+      });
+      // filled-in form fields and comments are not part of the page text: black out the whole field when it matches
+      (p.annots || []).forEach(function (a) {
+        var v = a.fieldValue;
+        var txt = [Array.isArray(v) ? v.join(' ') : (typeof v === 'string' ? v : ''), a.contentsObj && a.contentsObj.str, a.textContent && a.textContent.join(' ')]
+          .filter(Boolean).join(' ').replace(/\s+/g, ' ');
+        if (!txt || !a.rect) return;
+        pats.forEach(function (pat, pi) {
+          pat.re.lastIndex = 0;
+          if (pat.re.test(txt)) {
+            counts[pi]++;
+            var pts = rectBox(a.rect);
+            p.auto.push({ pts: pts, key: boxKey(p, pts) + ':field', label: pat.label });
+          }
+        });
+      });
+      drawOverlay(p);
+    });
+    // counts per item
+    var ul = $('found'); ul.innerHTML = '';
+    pats.forEach(function (pat, i) {
+      ul.appendChild(el('li', { className: counts[i] ? '' : 'zero' }, [
+        el('span', { className: 't', text: pat.label, title: pat.label }),
+        el('span', { className: 'n', text: counts[i] ? counts[i] + ' found' : 'not found' })
+      ]));
+    });
+    var w = $('scanWarn');
+    if (pdf && noText.length) {
+      w.classList.remove('hidden');
+      w.textContent = (noText.length === pages.length ? 'This PDF has no typed text (it looks scanned)' : 'Page' + (noText.length > 1 ? 's ' : ' ') + noText.join(', ') + (noText.length > 1 ? ' have' : ' has') + ' no typed text (scanned)') +
+        '. Words there can’t be found automatically — drag boxes over them instead.';
+    } else w.classList.add('hidden');
+    updateSummary();
+    updateNameWarning();
+  }
+  function activeBoxes(p) {
+    return p.auto.filter(function (b) { return !kept[b.key]; }).concat(p.manual);
+  }
+  function updateSummary() {
+    var auto = 0, keptN = 0, manual = 0;
+    pages.forEach(function (p) { p.auto.forEach(function (b) { if (kept[b.key]) keptN++; else auto++; }); manual += p.manual.length; });
+    $('summary').textContent = pdf ? (auto + manual) + ' area' + (auto + manual === 1 ? '' : 's') + ' blacked out' +
+      (manual ? ' (' + manual + ' drawn by hand)' : '') + (keptN ? ', ' + keptN + ' kept visible' : '') : '';
+  }
+
+  // ---------- page previews ----------
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) { if (e.isIntersecting) { renderPreview(e.target.__page); observer.unobserve(e.target); } });
+  }, { rootMargin: '600px 0px' });
+
+  function buildPageView(p) {
+    var w = p.vp1.width, h = p.vp1.height;
+    var canvas = el('canvas'), overlay = el('div', { className: 'overlay' });
+    var box = el('div', { className: 'page' }, [canvas, overlay]);
+    box.style.aspectRatio = w + ' / ' + h;
+    box.style.maxWidth = Math.min(900, w * 1.6) + 'px';
+    var head = el('div', { className: 'pagehead' }, [el('span', { text: 'Page ' + p.num + ' of ' + pdf.numPages })]);
+    if (!p.hasText) head.appendChild(el('span', { className: 'scan', text: 'Scanned page — drag boxes over anything to hide' }));
+    var wrap = el('div', { className: 'pagewrap' }, [head, box]);
+    $('pages').appendChild(wrap);
+    p.el = box; p.canvas = canvas; p.overlay = overlay;
+    box.__page = p;
+    observer.observe(box);
+    setupDrawing(p);
+  }
+  function renderPreview(p) {
+    var cssW = p.el.clientWidth || 800;
+    var scale = cssW / p.vp1.width * Math.min(window.devicePixelRatio || 1, 2);
+    var vp = p.page.getViewport({ scale: scale });
+    p.canvas.width = Math.floor(vp.width); p.canvas.height = Math.floor(vp.height);
+    var ctx = p.canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, p.canvas.width, p.canvas.height);
+    p.page.render({ canvasContext: ctx, viewport: vp, annotationMode: pdfjsLib.AnnotationMode.ENABLE }).promise.catch(function (e) { console.warn(e); });
+  }
+  // Boxes are placed in % of the page so they stay right at any size
+  function drawOverlay(p) {
+    if (!p.overlay) return;
+    var W = p.vp1.width, H = p.vp1.height;
+    p.overlay.querySelectorAll('.box:not(.drawing)').forEach(function (b) { b.remove(); });
+    function place(b, r) {
+      b.style.left = (r.x / W * 100) + '%'; b.style.top = (r.y / H * 100) + '%';
+      b.style.width = (r.w / W * 100) + '%'; b.style.height = (r.h / H * 100) + '%';
+      p.overlay.appendChild(b);
+    }
+    p.auto.forEach(function (a) {
+      var b = el('div', { className: 'box auto' + (kept[a.key] ? ' kept' : ''), title: a.label + (kept[a.key] ? ' — kept visible (click to black out)' : ' — click to keep this one visible') });
+      b.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+      b.addEventListener('click', function (e) {
+        e.stopPropagation();
+        if (kept[a.key]) delete kept[a.key]; else kept[a.key] = 1;
+        drawOverlay(p); updateSummary();
+      });
+      place(b, toView(p.vp1, a.pts));
+    });
+    p.manual.forEach(function (m, i) {
+      var b = el('div', { className: 'box manual', title: 'Drawn by hand — click to remove' });
+      b.addEventListener('pointerdown', function (e) { e.stopPropagation(); });
+      b.addEventListener('click', function (e) { e.stopPropagation(); p.manual.splice(i, 1); drawOverlay(p); updateSummary(); });
+      place(b, toView(p.vp1, m.pts));
+    });
+  }
+  // Drag on a page to add a box
+  function setupDrawing(p) {
+    var start = null, temp = null;
+    function pos(e) {
+      var r = p.overlay.getBoundingClientRect();
+      return [Math.max(0, Math.min(r.width, e.clientX - r.left)) / r.width * p.vp1.width,
+              Math.max(0, Math.min(r.height, e.clientY - r.top)) / r.height * p.vp1.height];
+    }
+    p.overlay.addEventListener('pointerdown', function (e) {
+      if (e.button !== 0) return;
+      start = pos(e);
+      temp = el('div', { className: 'box drawing' });
+      p.overlay.appendChild(temp);
+      p.overlay.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    p.overlay.addEventListener('pointermove', function (e) {
+      if (!start) return;
+      var q = pos(e), W = p.vp1.width, H = p.vp1.height;
+      temp.style.left = Math.min(start[0], q[0]) / W * 100 + '%'; temp.style.top = Math.min(start[1], q[1]) / H * 100 + '%';
+      temp.style.width = Math.abs(q[0] - start[0]) / W * 100 + '%'; temp.style.height = Math.abs(q[1] - start[1]) / H * 100 + '%';
+    });
+    function end(e) {
+      if (!start) return;
+      var q = pos(e), s = start;
+      start = null; if (temp) temp.remove(); temp = null;
+      if (Math.abs(q[0] - s[0]) < 3 || Math.abs(q[1] - s[1]) < 3) return;   // a click, not a drag
+      // store in PDF units
+      var a = p.vp1.convertToPdfPoint(Math.min(s[0], q[0]), Math.min(s[1], q[1]));
+      var b = p.vp1.convertToPdfPoint(Math.max(s[0], q[0]), Math.max(s[1], q[1]));
+      p.manual.push({ pts: rectBox([a[0], a[1], b[0], b[1]]) });
+      drawOverlay(p); updateSummary();
+    }
+    p.overlay.addEventListener('pointerup', end);
+    p.overlay.addEventListener('pointercancel', function () { start = null; if (temp) temp.remove(); temp = null; });
+  }
+
+  ['terms'].forEach(function (id) { $(id).addEventListener('input', scheduleRecompute); });
+  ['caseSensitive', 'wholeWords', 'findSSN', 'findEmail', 'findPhone'].forEach(function (id) { $(id).addEventListener('change', recompute); });
+  $('peek').addEventListener('change', function () { document.body.classList.toggle('peek', $('peek').checked); });
+
+  // ---------- file name: "<name>_redacted.pdf", then "_redacted (1)", "(2)" ... ----------
+  function redactedName(inputName, k) {
+    var base = String(inputName || 'document').replace(/\.pdf$/i, ''), n = -1;
+    var m = base.match(/^(.*)_redacted(?: \((\d+)\))?$/i);
+    if (m) { base = m[1]; n = m[2] ? parseInt(m[2], 10) : 0; }
+    var idx = n + 1 + k;
+    return base + '_redacted' + (idx > 0 ? ' (' + idx + ')' : '') + '.pdf';
+  }
+  var nameTouched = false;
+  $('outName').addEventListener('input', function () { nameTouched = true; updateNameWarning(); });
+  function updateOutName() { nameTouched = false; $('outName').value = redactedName(srcName, saves); updateNameWarning(); }
+  // A file name can give away what was blacked out (e.g. "Invoice_John_Smith_redacted.pdf")
+  function updateNameWarning() {
+    var w = $('nameWarn'), name = $('outName').value, flat = name.replace(/[_\-.]+/g, ' ');
+    var hits = patterns().filter(function (pat) { pat.re.lastIndex = 0; return pat.re.test(name) || (pat.re.lastIndex = 0, pat.re.test(flat)); });
+    w.classList.toggle('hidden', !hits.length);
+    if (hits.length) w.textContent = 'The file name contains “' + hits.map(function (h) { return h.label; }).join('”, “') + '”, which you are blacking out. Change the name above so it doesn’t give it away.';
+  }
+
+  // ---------- saving ----------
+  $('btnSave').addEventListener('click', function () {
+    if (!pdf) return;
+    var name = $('outName').value.trim() || redactedName(srcName, saves);
+    if (!/\.pdf$/i.test(name)) name += '.pdf';
+    name = name.replace(/[\\/:*?"<>|]+/g, '_');
+    var total = 0; pages.forEach(function (p) { total += activeBoxes(p).length; });
+    if (!total && !confirm('Nothing is blacked out yet. Save a copy anyway?')) return;
+    var btn = $('btnSave'); btn.disabled = true; btn.textContent = 'Making the redacted PDF…';
+    $('savedBox').classList.add('hidden');
+    buildRedacted(parseInt($('quality').value, 10)).then(function (bytes) {
+      btn.textContent = 'Checking the result…';
+      return verifyRedacted(bytes).then(function (check) {
+        if (!check.ok) throw new Error('The check of the new file failed: ' + check.problem);
+        var blob = new Blob([bytes], { type: 'application/pdf' });
+        var url = URL.createObjectURL(blob);
+        var a = el('a', { href: url, download: name });
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 10000);
+        saves++;
+        var box = $('savedBox'); box.classList.remove('hidden');
+        box.textContent = '✓ Saved “' + name + '” (' + check.pages + ' page' + (check.pages === 1 ? '' : 's') + ', ' + Math.round(bytes.length / 1024) +
+          ' KB). Checked: it contains no text, no form fields and no comments — the blacked-out words cannot be recovered.';
+        if (bytes.length > 20 * 1024 * 1024) box.textContent += ' This file is ' + (bytes.length / 1048576).toFixed(0) + ' MB, which is too big for most email. Choose “Standard” quality to make it smaller.';
+        toast('Saved ' + name);
+        if (!nameTouched) updateOutName();
+      });
+    }).catch(function (e) {
+      console.error(e);
+      alert('Sorry, the redacted PDF could not be made: ' + (e && e.message ? e.message : e));
+    }).then(function () {
+      btn.disabled = false; btn.textContent = '⬇ Save redacted PDF'; setProgress('saveProgress', null);
+    });
+  });
+
+  // Every page becomes a flat picture with the black boxes burned in, so nothing of the original is kept.
+  function buildRedacted(dpi) {
+    var scale = dpi / 72, out = null, i = 0;
+    var jsPDF = window.jspdf.jsPDF;
+    setProgress('saveProgress', 0);
+    function step() {
+      if (i >= pages.length) return Promise.resolve();
+      var p = pages[i++];
+      var vp = p.page.getViewport({ scale: scale });
+      var canvas = document.createElement('canvas');
+      canvas.width = Math.ceil(vp.width); canvas.height = Math.ceil(vp.height);
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      return p.page.render({ canvasContext: ctx, viewport: vp, annotationMode: pdfjsLib.AnnotationMode.ENABLE }).promise.then(function () {
+        ctx.fillStyle = '#000';
+        activeBoxes(p).forEach(function (b) {
+          var r = toView(vp, b.pts);
+          var x0 = Math.floor(r.x), y0 = Math.floor(r.y);
+          ctx.fillRect(x0, y0, Math.ceil(r.x + r.w) - x0, Math.ceil(r.y + r.h) - y0);
+        });
+        var img = canvas.toDataURL('image/jpeg', 0.85);
+        var w = p.vp1.width, h = p.vp1.height, orient = w > h ? 'l' : 'p';
+        if (!out) out = new jsPDF({ unit: 'pt', format: [w, h], orientation: orient, compress: true });
+        else out.addPage([w, h], orient);
+        out.addImage(img, 'JPEG', 0, 0, w, h, undefined, 'NONE');
+        canvas.width = canvas.height = 0;
+        setProgress('saveProgress', i / pages.length);
+        return nextFrame().then(step);
+      });
+    }
+    return step().then(function () {
+      out.setDocumentProperties({ title: '', subject: '', author: '', keywords: '', creator: '' });
+      return new Uint8Array(out.output('arraybuffer'));
+    });
+  }
+  // Re-open the new file and make sure nothing readable is left in it.
+  function verifyRedacted(bytes) {
+    return pdfjsLib.getDocument({ data: bytes.slice(), isEvalSupported: false }).promise.then(function (doc) {
+      var n = doc.numPages, problems = [];
+      var checks = [];
+      for (var k = 1; k <= n; k++) checks.push(doc.getPage(k).then(function (pg) {
+        return Promise.all([pg.getTextContent(), pg.getAnnotations()]).then(function (r) {
+          if (r[0].items.some(function (it) { return it.str && /\S/.test(it.str); })) problems.push('page ' + pg.pageNumber + ' still has text');
+          if (r[1].length) problems.push('page ' + pg.pageNumber + ' still has form fields or comments');
+        });
+      }));
+      return Promise.all(checks).then(function () {
+        return doc.getMetadata().then(function (md) {
+          var info = md.info || {};
+          ['Title', 'Author', 'Subject', 'Keywords'].forEach(function (k) { if (info[k]) problems.push('document information "' + k + '" is not empty'); });
+          return doc.getOutline();
+        }).then(function (outline) {
+          if (outline && outline.length) problems.push('it has bookmarks');
+          var ok = !problems.length && n === pages.length;
+          doc.destroy();
+          return { ok: ok, pages: n, problem: problems.join('; ') || (n !== pages.length ? 'page count changed' : '') };
+        });
+      });
+    });
+  }
+
+  window.__redactor = {
+    state: function () { return { pages: pages, kept: kept, srcName: srcName, saves: saves }; },
+    redactedName: redactedName, recompute: recompute
+  };
+})();
+</script>
+</body>
+</html>
